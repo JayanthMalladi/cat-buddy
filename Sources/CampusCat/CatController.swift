@@ -2,16 +2,17 @@ import AppKit
 
 /// Owns the cat window and runs the state machine.
 ///
-/// curledSleeping --hover--> waking --> curious | happy | stretching | walking
-/// awake --hover--> curious | happy | stretching | walking
-/// reaction --> awake --(15 s)--> yawning --> curledSleeping
-/// Messages come on a timer (Messages menu); if she is asleep she wakes up to say them.
-/// Clicking her shows a message right away.
+/// curledSleeping --hover (+ a message)--> stretching -> yawning
+///     -> one of curious | happy | awake | yawning -> resting -> curledSleeping
+/// Clicking shows a message (with a cooldown shared with hover messages).
+/// Timed messages (Messages menu) and reminders (reminders.json) play a short pose and speak,
+/// then she goes back to sleep.
 @MainActor
 final class CatController: NSObject {
     private let manifest: Manifest
     private let frameStore: FrameStore
     private let messages = Messages()
+    private let reminders = Reminders()
     private let bubble = SpeechBubble()
     private let panel: CatPanel
     private let view: CatView
@@ -19,9 +20,8 @@ final class CatController: NSObject {
 
     private(set) var state: CatState = .curledSleeping
     private var stateEnteredAt = Date()
-    private var goingToSleep = false
-    private var sayAfterWaking = false
-    private var reactAfterWaking = false
+    /// Animations still to play in the current sequence; when it runs out she sleeps again.
+    private var queue: [CatState] = []
 
     // Hover: the pointer has to rest on the cat briefly, and leave again before the next action.
     private var hoverStartedAt: Date?
@@ -29,18 +29,16 @@ final class CatController: NSObject {
     private let hoverDwell: TimeInterval = 0.4
 
     private var nextMessageAt = Date()
-
-    private var walkDirection: CGFloat = 1
-    private var walkUntil = Date()
-    private var walkTimer: Timer?
+    private var lastInteractiveMessageAt = Date.distantPast
 
     private var tickTimer: Timer?
     private var hoverTimer: Timer?
 
     // Timing knobs, in seconds.
-    private let awakeLingers: TimeInterval = 15
-    private let restingLingers: TimeInterval = 20
-    private let walkSpeed: CGFloat = 45   // points per second
+    /// Minimum gap between messages from hovering or clicking.
+    private let interactiveMessageCooldown: TimeInterval = 20
+    /// How long the resting pose lasts before she curls back up.
+    private let restingLingers: TimeInterval = 6
 
     /// Message interval choices offered in the menu bar, in minutes.
     static let messageIntervals: [Int] = [5, 15, 30, 60]
@@ -54,6 +52,14 @@ final class CatController: NSObject {
         set {
             UserDefaults.standard.set(newValue, forKey: "messageMinutes")
             scheduleNextMessage()
+        }
+    }
+
+    var remindersOn: Bool {
+        get { UserDefaults.standard.object(forKey: "remindersOn") as? Bool ?? true }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "remindersOn")
+            if newValue { reminders.restart() }
         }
     }
 
@@ -116,6 +122,7 @@ final class CatController: NSObject {
         panel.setFrameOrigin(savedOrDefaultOrigin())
         panel.orderFrontRegardless()
         scheduleNextMessage()
+        reminders.restart()
         enter(.curledSleeping)
 
         let tick = Timer(timeInterval: 1, target: self, selector: #selector(tick),
@@ -136,19 +143,7 @@ final class CatController: NSObject {
         state = newState
         stateEnteredAt = Date()
         let spec = manifest.spec(newState)
-
-        if let walkTimer = walkTimer {
-            walkTimer.invalidate()
-            self.walkTimer = nil
-            savePosition()
-        }
-        if newState == .walking {
-            startWalking()
-        } else {
-            view.setFacingLeft(false)
-        }
         view.setOffsetY((spec.offsetY ?? 0) * scale)
-
         player.play(frameStore.frames(for: spec), fps: spec.fps, loop: spec.loop) { [weak self] in
             self?.finished(newState)
         }
@@ -157,127 +152,71 @@ final class CatController: NSObject {
     /// A one-shot animation reached its last frame.
     private func finished(_ finishedState: CatState) {
         guard finishedState == state else { return }
-        switch finishedState {
-        case .yawning where goingToSleep:
-            goingToSleep = false
-            enter(.curledSleeping)
-        case .waking:
-            if reactAfterWaking {
-                enter(randomReaction())
-            } else {
-                enter(.awake)
-            }
-            if sayAfterWaking { say() }
-            reactAfterWaking = false
-            sayAfterWaking = false
-        default:
-            let next = manifest.spec(finishedState).next.flatMap(CatState.init(rawValue:)) ?? .resting
-            enter(next)
-        }
+        advance()
     }
 
-    /// The pointer has rested on the cat: wake her if needed and do a random action.
+    /// Plays the next animation in the sequence, or goes back to sleep when it's done.
+    private func advance() {
+        enter(queue.isEmpty ? .curledSleeping : queue.removeFirst())
+    }
+
+    /// Starts a sequence, but only while she's asleep, so a sequence always plays to the end.
+    private func act(_ sequence: [CatState]) -> Bool {
+        guard state == .curledSleeping, let first = sequence.first else { return false }
+        queue = Array(sequence.dropFirst())
+        enter(first)
+        return true
+    }
+
+    /// The pointer has rested on the sleeping cat: she says something and runs through her routine.
     private func hovered() {
-        goingToSleep = false
-        switch state {
-        case .resting, .curledSleeping, .yawning:
-            reactAfterWaking = true
-            enter(.waking)
-        case .awake:
-            enter(randomReaction())
-        case .waking:
-            reactAfterWaking = true
-        case .walking, .curious, .happy, .stretching:
-            break   // let the current action finish
+        let middleOptions: [CatState] = [.curious, .happy, .awake, .yawning]
+        let middle = middleOptions.randomElement()!
+        if act([.stretching, .yawning, middle, .resting]) {
+            sayInteractive(force: false)
         }
     }
 
-    /// A click always gets a message (even in Quiet Mode, since she was asked), and wakes her if needed.
+    /// A click shows a message (even in Quiet Mode, since she was asked), subject to the cooldown.
     private func clicked() {
-        say(force: true)
-        switch state {
-        case .resting, .curledSleeping, .yawning:
-            goingToSleep = false
-            enter(.waking)
-        default:
-            break
-        }
-    }
-
-    private func randomReaction() -> CatState {
-        weightedPick([(.curious, 3), (.happy, 3), (.walking, 2), (.stretching, 1)])
+        sayInteractive(force: true)
     }
 
     @objc private func tick() {
         let now = Date()
-        let inState = now.timeIntervalSince(stateEnteredAt)
-
-        switch state {
-        case .awake where inState > awakeLingers, .resting where inState > restingLingers:
-            goingToSleep = true
-            enter(.yawning)
-        case .walking where now > walkUntil:
-            enter(.awake)
-        default:
-            break
+        // Resting loops, so it ends on a timer.
+        if state == .resting && now.timeIntervalSince(stateEnteredAt) > restingLingers {
+            advance()
         }
 
         if now > nextMessageAt {
             scheduleNextMessage()
-            guard !isQuiet else { return }
-            switch state {
-            case .curledSleeping, .resting, .yawning:
-                // Wake up to say it.
-                goingToSleep = false
-                sayAfterWaking = true
-                enter(.waking)
-            case .waking:
-                sayAfterWaking = true
-            default:
-                say()
+            if !isQuiet, let text = messages.next() {
+                _ = act([.resting])
+                bubble.show(text, above: panel)
             }
         }
-    }
 
-    // MARK: - Walking
-
-    private func startWalking() {
-        walkUntil = Date().addingTimeInterval(.random(in: 4...7))
-        if let screen = (panel.screen ?? NSScreen.main)?.visibleFrame {
-            // Head toward the side with more room.
-            let roomRight = screen.maxX - panel.frame.maxX
-            let roomLeft = panel.frame.minX - screen.minX
-            walkDirection = roomRight >= roomLeft ? 1 : -1
+        if remindersOn, let reminder = reminders.due(at: now), !isQuiet {
+            _ = act([reminder.animation.flatMap(CatState.init(rawValue:)) ?? .resting])
+            bubble.show(reminder.text, above: panel)
         }
-        view.setFacingLeft(walkDirection < 0)   // the walking art faces right
-
-        let timer = Timer(timeInterval: 1.0 / 30, target: self, selector: #selector(stepWalk),
-                          userInfo: nil, repeats: true)
-        RunLoop.main.add(timer, forMode: .common)
-        walkTimer = timer
-    }
-
-    @objc private func stepWalk(_ timer: Timer) {
-        guard !view.isTracking else { return }
-        var origin = panel.frame.origin
-        origin.x += walkDirection * walkSpeed * CGFloat(timer.timeInterval)
-        if let screen = (panel.screen ?? NSScreen.main)?.visibleFrame {
-            if origin.x < screen.minX || origin.x + panel.frame.width > screen.maxX {
-                walkDirection *= -1
-                view.setFacingLeft(walkDirection < 0)
-                origin.x = min(max(origin.x, screen.minX), screen.maxX - panel.frame.width)
-            }
-        }
-        panel.setFrameOrigin(origin)
     }
 
     // MARK: - Messages
 
-    /// Shows a preset line (unless quiet mode is on and it wasn't asked for from the menu).
-    func say(force: Bool = false) {
-        if isQuiet && !force { return }
+    /// Shows a random preset line (from the menu: always).
+    func say() {
         guard let text = messages.next() else { return }
         bubble.show(text, above: panel)
+    }
+
+    /// Hover and click messages share one cooldown so they can't pile up.
+    private func sayInteractive(force: Bool) {
+        if isQuiet && !force { return }
+        guard Date().timeIntervalSince(lastInteractiveMessageAt) >= interactiveMessageCooldown else { return }
+        lastInteractiveMessageAt = Date()
+        say()
     }
 
     // MARK: - Mouse pass-through
@@ -353,14 +292,5 @@ final class CatController: NSObject {
     private func defaultOrigin() -> NSPoint {
         guard let screen = NSScreen.main?.visibleFrame else { return NSPoint(x: 100, y: 100) }
         return NSPoint(x: screen.maxX - panel.frame.width - 40, y: screen.minY + 10)
-    }
-
-    private func weightedPick(_ options: [(CatState, Int)]) -> CatState {
-        var roll = Int.random(in: 0..<options.reduce(0) { $0 + $1.1 })
-        for (option, weight) in options {
-            if roll < weight { return option }
-            roll -= weight
-        }
-        return options[0].0
     }
 }

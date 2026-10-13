@@ -15,15 +15,17 @@ After that it opens like any other app. It has no Dock icon; look for the paw pr
 
 ## Using it
 
-- She sleeps curled up by default. **Rest the pointer on her** for a moment and she wakes up and does something random: a head tilt, a happy wiggle, a stretch, or a little walk. Move the pointer off and back on for another one.
+- She sleeps curled up by default.
+- **Rest the pointer on her** while she sleeps: she says one of the messages, stretches, yawns, then does one of a head tilt, a happy wiggle, sitting up, or another yawn, rests for a moment and curls back up to sleep. Hovering again after she's asleep starts it over.
+- **Click her** for a message. Hover and click messages share a 20-second cooldown so they can't pile up.
 - **Drag the cat** to move her anywhere. She remembers where you put her.
-- **Click her** and she says one of the messages right away (waking up if she was asleep).
 - Clicks on the empty space around her go straight through to whatever is behind.
-- Left alone for about 15 seconds she yawns and curls back up to sleep.
-- She says one of the preset messages on a timer (every 15 minutes by default), waking up first if she's asleep.
+- Every so often (every 15 minutes by default) she rests and says a random message on her own.
+- **Reminders** come on their own schedule: drink water every hour, stretch every 90 minutes (she stretches with you), and a snack check every 4 hours.
 - **Menu bar paw:**
   - *Say Something* shows a message right away.
-  - *Quiet Mode* turns off the timed messages. Clicking her still gets you one.
+  - *Quiet Mode* stops everything she says on her own (hover, timed messages and reminders). Clicking her still gets you one.
+  - *Water & Stretch Reminders* turns the reminders on or off.
   - *Messages* sets how often she talks: every 5, 15 or 30 minutes, or every hour.
   - *Size* makes her Small, Medium, Large or Extra Large (remembered between launches).
   - *Bring Cat Back* moves her to the bottom-right corner if she ever gets lost off screen.
@@ -33,10 +35,11 @@ To start it automatically, add it in **System Settings → General → Login Ite
 
 ## Changing messages and timing
 
-Both files are plain JSON inside the app (right-click CampusCat.app → *Show Package Contents* → `Contents/Resources`), and in this repo under `Resources/`.
+All three files are plain JSON inside the app (right-click CampusCat.app → *Show Package Contents* → `Contents/Resources`), and in this repo under `Resources/`.
 
 - `messages.json`: lists of messages grouped by category. Add or remove lines freely. The cat never repeats the last few, and talks on the interval chosen in the menu.
-- `animations.json`: one entry per state with `fps`, `loop`, the frame range (`start`, `end`), `offsetY` (points, to nudge a pose up or down) and `next` (the state after a one-shot animation).
+- `reminders.json`: each reminder's text, how often it comes (`everyMinutes`), and optionally an `animation` to play with it.
+- `animations.json`: one entry per state with `fps`, `loop`, the frame range (`start`, `end`), `offsetY` (points, to nudge a pose up or down).
 
 Editing files inside the app breaks its signature; after editing, run `codesign --force --deep --sign - /Applications/CampusCat.app` in Terminal (or rebuild).
 
@@ -64,7 +67,7 @@ python3 tools/prepare_sprites.py /path/to/sprites_repaired
 | File | What it does |
 |---|---|
 | `App.swift`, `AppDelegate.swift` | Startup and the menu bar item |
-| `CatController.swift` | The state machine: which animation plays, hover, idle timers, walking, messages |
+| `CatController.swift` | The state machine: which animation plays, hover, idle timers, messages, reminders |
 | `CatWindow.swift` | The transparent always-on-top window, dragging, and pixel-accurate click-through |
 | `Animation.swift` | Reads `animations.json`, loads frames, plays them |
 | `SpeechBubble.swift`, `Messages.swift` | The bubble and the message picker |

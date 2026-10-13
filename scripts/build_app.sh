@@ -12,13 +12,13 @@ rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/CampusCat"
 cp scripts/Info.plist "$APP/Contents/Info.plist"
-cp Resources/animations.json Resources/messages.json "$APP/Contents/Resources/"
+cp Resources/animations.json Resources/messages.json Resources/reminders.json "$APP/Contents/Resources/"
 cp -R Resources/Animations "$APP/Contents/Resources/Animations"
 
-# App icon from one of the awake frames.
+# App icon from one of the happy frames.
 ICONSET=build/AppIcon.iconset
 mkdir -p "$ICONSET"
-SRC=Resources/Animations/awake/frame_047.png
+SRC=Resources/Animations/happy/frame_020.png
 for size in 16 32 128 256 512; do
   sips -s format png -z "$size" "$size" "$SRC" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
   sips -s format png -z $((size * 2)) $((size * 2)) "$SRC" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null

@@ -92,8 +92,8 @@ for round in 1...6 {
     wait(2.5)
 }
 
-// Let any walk finish so the window only moves because of the drag.
-wait(8)
+// Wait for her routine to finish so she's asleep again before the drag.
+wait(20)
 
 // Drag the cat up and to the left, then check the window really moved.
 cat = catBounds() ?? cat
