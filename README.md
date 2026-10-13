@@ -17,12 +17,13 @@ After that it opens like any other app. It has no Dock icon; look for the paw pr
 
 - She sleeps curled up by default. **Rest the pointer on her** for a moment and she wakes up and does something random: a head tilt, a happy wiggle, a stretch, or a little walk. Move the pointer off and back on for another one.
 - **Drag the cat** to move her anywhere. She remembers where you put her.
+- **Click her** and she says one of the messages right away (waking up if she was asleep).
 - Clicks on the empty space around her go straight through to whatever is behind.
 - Left alone for about 15 seconds she yawns and curls back up to sleep.
 - She says one of the preset messages on a timer (every 15 minutes by default), waking up first if she's asleep.
 - **Menu bar paw:**
   - *Say Something* shows a message right away.
-  - *Quiet Mode* turns off all speech bubbles.
+  - *Quiet Mode* turns off the timed messages. Clicking her still gets you one.
   - *Messages* sets how often she talks: every 5, 15 or 30 minutes, or every hour.
   - *Size* makes her Small, Medium, Large or Extra Large (remembered between launches).
   - *Bring Cat Back* moves her to the bottom-right corner if she ever gets lost off screen.
