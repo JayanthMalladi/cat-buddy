@@ -29,6 +29,8 @@ final class CatController: NSObject {
     private let hoverDwell: TimeInterval = 0.4
 
     private var nextMessageAt = Date()
+    private var lastClickMessageAt = Date.distantPast
+    private let clickMessageCooldown: TimeInterval = 20
 
     private var walkDirection: CGFloat = 1
     private var walkUntil = Date()
@@ -192,9 +194,13 @@ final class CatController: NSObject {
         }
     }
 
-    /// A click always gets a message (even in Quiet Mode, since she was asked), and wakes her if needed.
+    /// A click gets a message (even in Quiet Mode, since she was asked) unless one came from a click
+    /// in the last 20 seconds, and wakes her if needed.
     private func clicked() {
-        say(force: true)
+        if Date().timeIntervalSince(lastClickMessageAt) >= clickMessageCooldown {
+            lastClickMessageAt = Date()
+            say(force: true)
+        }
         switch state {
         case .resting, .curledSleeping, .yawning:
             goingToSleep = false
