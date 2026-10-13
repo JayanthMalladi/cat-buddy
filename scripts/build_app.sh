@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds CampusCat.app (universal, ad-hoc signed) and zips it into build/CampusCat.zip.
+# Builds "Vrinda's Cat.app" (universal, ad-hoc signed) and zips it into build/VrindasCat.zip.
 # Runs on macOS with Xcode or the Swift toolchain installed. No Apple developer account needed.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 swift build -c release --arch arm64 --arch x86_64
 BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/CampusCat"
 
-APP=build/CampusCat.app
+APP="build/Vrinda's Cat.app"
 rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/CampusCat"
@@ -29,5 +29,5 @@ iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 codesign --force --deep --sign - "$APP"
 codesign --verify --verbose "$APP"
 
-ditto -c -k --keepParent "$APP" build/CampusCat.zip
-echo "Built $(du -h build/CampusCat.zip | cut -f1) build/CampusCat.zip"
+ditto -c -k --keepParent "$APP" build/VrindasCat.zip
+echo "Built $(du -h build/VrindasCat.zip | cut -f1) build/VrindasCat.zip"

@@ -1,23 +1,23 @@
-# Campus Cat
+# Vrinda's Cat
 
 A tiny cat that lives on your Mac desktop. She sleeps quietly in the corner, wakes up and does something cute when you rest the pointer on her, and every so often says something kind in a speech bubble. Everything is offline: no accounts, no internet, no AI at runtime.
 
 ## Download and open it
 
-1. Go to the repository's **Releases** page and download **CampusCat.zip** from the "latest" release (or, from any run on the **Actions** tab, download the **CampusCat** artifact, which is a zip containing CampusCat.zip).
-2. Double-click the zip to unpack it and drag **CampusCat.app** into **Applications**.
+1. Go to the repository's **Releases** page and download **VrindasCat.zip** from the "latest" release (or, from any run on the **Actions** tab, download the **VrindasCat** artifact, which is a zip containing VrindasCat.zip).
+2. Double-click the zip to unpack it and drag **Vrinda's Cat.app** into **Applications**.
 3. The first time only, macOS will block it because it isn't from the App Store or a paid developer account:
-   - **macOS 14 (Sonoma) or older:** right-click (or Control-click) CampusCat.app, choose **Open**, then click **Open** in the dialog.
-   - **macOS 15 (Sequoia) or newer:** double-click it, click **Done** on the warning, then open **System Settings → Privacy & Security**, scroll down to the message about CampusCat, click **Open Anyway**, and confirm with your password.
-   - Alternative for either: open Terminal and run `xattr -dr com.apple.quarantine /Applications/CampusCat.app`, then open it normally.
+   - **macOS 14 (Sonoma) or older:** right-click (or Control-click) Vrinda's Cat.app, choose **Open**, then click **Open** in the dialog.
+   - **macOS 15 (Sequoia) or newer:** double-click it, click **Done** on the warning, then open **System Settings → Privacy & Security**, scroll down to the message about Vrinda's Cat, click **Open Anyway**, and confirm with your password.
+   - Alternative for either: open Terminal and run `xattr -dr com.apple.quarantine "/Applications/Vrinda's Cat.app"`, then open it normally.
 
 After that it opens like any other app. It has no Dock icon; look for the paw print in the menu bar.
 
 ## Using it
 
 - She sleeps curled up by default.
-- **Rest the pointer on her** while she sleeps: she says one of the messages, stretches, yawns, then does one of a head tilt, a happy wiggle, sitting up, or another yawn, rests for a moment and curls back up to sleep. Hovering again after she's asleep starts it over.
-- **Click her** for a message. Hover and click messages share a 20-second cooldown so they can't pile up.
+- **Rest the pointer on her** while she sleeps: she wakes up for one random action (stretch, yawn, head tilt, happy wiggle, sitting up, or a short rest) and goes back to sleep when it's done. Move the pointer off and back on for another.
+- She also says a message when you hover or click, but at most once every 2 minutes. Inside that window she still does her action, just quietly.
 - **Drag the cat** to move her anywhere. She remembers where you put her.
 - Clicks on the empty space around her go straight through to whatever is behind.
 - Every so often (every 15 minutes by default) she rests and says a random message on her own.
@@ -29,19 +29,19 @@ After that it opens like any other app. It has no Dock icon; look for the paw pr
   - *Messages* sets how often she talks: every 5, 15 or 30 minutes, or every hour.
   - *Size* makes her Small, Medium, Large or Extra Large (remembered between launches).
   - *Bring Cat Back* moves her to the bottom-right corner if she ever gets lost off screen.
-  - *Quit Campus Cat*.
+  - *Quit Vrinda's Cat*.
 
 To start it automatically, add it in **System Settings → General → Login Items**.
 
 ## Changing messages and timing
 
-All three files are plain JSON inside the app (right-click CampusCat.app → *Show Package Contents* → `Contents/Resources`), and in this repo under `Resources/`.
+All three files are plain JSON inside the app (right-click Vrinda's Cat.app → *Show Package Contents* → `Contents/Resources`), and in this repo under `Resources/`.
 
 - `messages.json`: lists of messages grouped by category. Add or remove lines freely. The cat never repeats the last few, and talks on the interval chosen in the menu.
 - `reminders.json`: each reminder's text, how often it comes (`everyMinutes`), and optionally an `animation` to play with it.
 - `animations.json`: one entry per state with `fps`, `loop`, the frame range (`start`, `end`), `offsetY` (points, to nudge a pose up or down).
 
-Editing files inside the app breaks its signature; after editing, run `codesign --force --deep --sign - /Applications/CampusCat.app` in Terminal (or rebuild).
+Editing files inside the app breaks its signature; after editing, run `codesign --force --deep --sign - "/Applications/Vrinda's Cat.app"` in Terminal (or rebuild).
 
 ## Building
 
@@ -50,7 +50,7 @@ The app is a Swift package with no dependencies. GitHub Actions builds it on a m
 On a Mac with Xcode installed:
 
 ```sh
-./scripts/build_app.sh      # makes build/CampusCat.app and build/CampusCat.zip
+./scripts/build_app.sh      # makes "build/Vrinda's Cat.app" and build/VrindasCat.zip
 swift run                   # or run straight from the source tree
 ```
 
