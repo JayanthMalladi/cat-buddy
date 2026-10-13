@@ -3,7 +3,7 @@ import ImageIO
 
 /// The cat's states. Each one has an entry with the same name in animations.json.
 enum CatState: String, CaseIterable {
-    case curledSleeping, stretching, yawning, curious, happy, awake, resting
+    case curledSleeping, stretching, yawning, curious, happy, awake, resting, walking
 }
 
 /// One entry of animations.json.

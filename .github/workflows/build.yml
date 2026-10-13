@@ -18,8 +18,10 @@ jobs:
       - name: Build the app
         run: ./scripts/build_app.sh
 
-      - name: Check the app starts, then click, drag and screenshot it
+      - name: Check the app starts, then hover, drag, watch a walk and screenshot it
         run: |
+          # Walk every 150 s instead of 5 min so the check can see one.
+          defaults write com.campuscat.buddy walkEverySeconds -float 150
           # Launch the real binary; fail if it crashes on startup.
           "build/Vrinda's Cat.app/Contents/MacOS/CampusCat" &
           PID=$!

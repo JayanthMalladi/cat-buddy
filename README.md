@@ -20,6 +20,7 @@ After that it opens like any other app. It has no Dock icon; look for the paw pr
 - She also says a message when you hover or click, but at most once every 2 minutes. Inside that window she still does her action, just quietly.
 - **Drag the cat** to move her anywhere. She remembers where you put her.
 - Clicks on the empty space around her go straight through to whatever is behind.
+- **Every 5 minutes** she wakes up by herself and walks to the other side of the screen, then curls up to sleep there. Walks are silent, and hovering or clicking does nothing until she's asleep again. If she's in the middle of something when it's time, she finishes it first.
 - Every so often (every 15 minutes by default) she rests and says a random message on her own.
 - **Reminders** come on their own schedule: drink water every hour, stretch every 90 minutes (she stretches with you), and a snack check every 4 hours.
 - **Menu bar paw:**
@@ -67,7 +68,7 @@ python3 tools/prepare_sprites.py /path/to/sprites_repaired
 | File | What it does |
 |---|---|
 | `App.swift`, `AppDelegate.swift` | Startup and the menu bar item |
-| `CatController.swift` | The state machine: which animation plays, hover, idle timers, messages, reminders |
+| `CatController.swift` | The state machine: which animation plays, hover, walking, messages, reminders |
 | `CatWindow.swift` | The transparent always-on-top window, dragging, and pixel-accurate click-through |
 | `Animation.swift` | Reads `animations.json`, loads frames, plays them |
 | `SpeechBubble.swift`, `Messages.swift` | The bubble and the message picker |

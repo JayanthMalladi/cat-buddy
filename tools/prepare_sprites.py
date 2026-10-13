@@ -31,6 +31,7 @@ ANIMATIONS = {
     "happy": ("happy_cat", 511, [(0, 68)]),
     # Tail clips the canvas edge at 84-86, so stop before it.
     "stretching": ("stretching_cat", 535, [(0, 83)]),
+    "walking": ("walking_cat", 505, [(0, 95)]),
     "yawning": ("yawning_cat", 558, [(0, 95)]),
     "sleeping": ("sleeping_cat", 510, [(0, 95)]),
 }
