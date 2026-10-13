@@ -22,6 +22,7 @@ After that it opens like any other app. It has no Dock icon; look for the paw pr
 - **Menu bar paw:**
   - *Say Something* shows a message right away.
   - *Quiet Mode* turns off all speech bubbles.
+  - *Size* makes her Small, Medium, Large or Extra Large (remembered between launches).
   - *Bring Cat Back* moves her to the bottom-right corner if she ever gets lost off screen.
   - *Quit Campus Cat*.
 

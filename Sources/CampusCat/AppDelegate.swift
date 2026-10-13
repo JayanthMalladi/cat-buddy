@@ -4,6 +4,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cat: CatController!
     private var statusItem: NSStatusItem!
+    private var sizeItems: [NSMenuItem] = []
     private let quietItem = NSMenuItem(title: "Quiet Mode (no messages)", action: #selector(AppDelegate.toggleQuiet), keyEquivalent: "")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -31,6 +32,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.target = self
             menu.addItem(item)
         }
+
+        let sizeMenu = NSMenu()
+        for (index, option) in CatController.sizes.enumerated() {
+            let item = NSMenuItem(title: option.name, action: #selector(chooseSize(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = index
+            sizeMenu.addItem(item)
+            sizeItems.append(item)
+        }
+        let sizeItem = NSMenuItem(title: "Size", action: nil, keyEquivalent: "")
+        sizeItem.submenu = sizeMenu
+        menu.addItem(sizeItem)
+        updateSizeChecks()
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Campus Cat", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
@@ -43,6 +57,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func toggleQuiet() {
         cat.isQuiet.toggle()
         quietItem.state = cat.isQuiet ? .on : .off
+    }
+
+    @objc private func chooseSize(_ sender: NSMenuItem) {
+        cat.scale = CatController.sizes[sender.tag].scale
+        updateSizeChecks()
+    }
+
+    private func updateSizeChecks() {
+        for item in sizeItems {
+            item.state = abs(CatController.sizes[item.tag].scale - cat.scale) < 0.01 ? .on : .off
+        }
     }
 
     @objc private func resetPosition() {

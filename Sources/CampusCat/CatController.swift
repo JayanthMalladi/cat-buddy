@@ -48,6 +48,27 @@ final class CatController: NSObject {
         }
     }
 
+    /// Size choices offered in the menu bar, as a multiple of the art's natural size.
+    static let sizes: [(name: String, scale: CGFloat)] = [
+        ("Small", 0.7), ("Medium", 1.0), ("Large", 1.4), ("Extra Large", 1.8),
+    ]
+
+    private static func savedScale() -> CGFloat {
+        let saved = UserDefaults.standard.double(forKey: "catScale")
+        return saved > 0 ? CGFloat(saved) : 1
+    }
+
+    /// Current size multiplier. Changing it resizes the cat, keeping her feet in place.
+    var scale: CGFloat {
+        get { Self.savedScale() }
+        set {
+            UserDefaults.standard.set(Double(newValue), forKey: "catScale")
+            applyScale()
+        }
+    }
+
+    private let baseSize: NSSize
+
     override init() {
         let manifest = Manifest.load()
         let frameStore = FrameStore()
@@ -55,8 +76,10 @@ final class CatController: NSObject {
         self.frameStore = frameStore
         let first = frameStore.frames(for: manifest.spec(.resting)).first
         let pixelSize = first.map { NSSize(width: $0.width, height: $0.height) } ?? NSSize(width: 427, height: 367)
-        let size = NSSize(width: ceil(pixelSize.width * manifest.pointsPerPixel),
-                          height: ceil(pixelSize.height * manifest.pointsPerPixel))
+        baseSize = NSSize(width: pixelSize.width * manifest.pointsPerPixel,
+                          height: pixelSize.height * manifest.pointsPerPixel)
+        let scale = Self.savedScale()
+        let size = NSSize(width: ceil(baseSize.width * scale), height: ceil(baseSize.height * scale))
         let view = CatView(frame: NSRect(origin: .zero, size: size))
         panel = CatPanel(size: size)
         self.view = view
@@ -102,7 +125,7 @@ final class CatController: NSObject {
         } else {
             view.setFacingLeft(false)
         }
-        view.setOffsetY(spec.offsetY ?? 0)
+        view.setOffsetY((spec.offsetY ?? 0) * scale)
 
         player.play(frameStore.frames(for: spec), fps: spec.fps, loop: spec.loop) { [weak self] in
             self?.finished(newState)
@@ -228,6 +251,20 @@ final class CatController: NSObject {
     }
 
     // MARK: - Position
+
+    private func applyScale() {
+        let size = NSSize(width: ceil(baseSize.width * scale), height: ceil(baseSize.height * scale))
+        let old = panel.frame
+        var frame = NSRect(x: old.midX - size.width / 2, y: old.minY, width: size.width, height: size.height)
+        if let screen = (panel.screen ?? NSScreen.main)?.visibleFrame {
+            frame.origin.x = min(max(frame.minX, screen.minX), screen.maxX - frame.width)
+            frame.origin.y = min(max(frame.minY, screen.minY), screen.maxY - frame.height)
+        }
+        panel.setFrame(frame, display: true)
+        view.frame = NSRect(origin: .zero, size: size)
+        view.setOffsetY((manifest.spec(state).offsetY ?? 0) * scale)
+        savePosition()
+    }
 
     func resetPosition() {
         panel.setFrameOrigin(defaultOrigin())
