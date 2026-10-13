@@ -6,6 +6,7 @@ import AppKit
 /// awake --hover--> curious | happy | stretching | walking
 /// reaction --> awake --(15 s)--> yawning --> curledSleeping
 /// Messages come on a timer (Messages menu); if she is asleep she wakes up to say them.
+/// Clicking her shows a message right away.
 @MainActor
 final class CatController: NSObject {
     private let manifest: Manifest
@@ -107,6 +108,7 @@ final class CatController: NSObject {
         super.init()
 
         panel.contentView = view
+        view.onClick = { [weak self] in self?.clicked() }
         view.onDragEnd = { [weak self] in self?.savePosition() }
     }
 
@@ -187,6 +189,18 @@ final class CatController: NSObject {
             reactAfterWaking = true
         case .walking, .curious, .happy, .stretching:
             break   // let the current action finish
+        }
+    }
+
+    /// A click always gets a message (even in Quiet Mode, since she was asked), and wakes her if needed.
+    private func clicked() {
+        say(force: true)
+        switch state {
+        case .resting, .curledSleeping, .yawning:
+            goingToSleep = false
+            enter(.waking)
+        default:
+            break
         }
     }
 
