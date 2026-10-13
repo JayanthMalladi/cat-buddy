@@ -6,7 +6,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var sizeItems: [NSMenuItem] = []
     private var intervalItems: [NSMenuItem] = []
-    private let quietItem = NSMenuItem(title: "Quiet Mode (no messages)", action: #selector(AppDelegate.toggleQuiet), keyEquivalent: "")
+    private let quietItem = NSMenuItem(title: "Quiet Mode (only speaks when clicked)", action: #selector(AppDelegate.toggleQuiet), keyEquivalent: "")
+    private let remindersItem = NSMenuItem(title: "Water & Stretch Reminders", action: #selector(AppDelegate.toggleReminders), keyEquivalent: "")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         cat = CatController()
@@ -28,8 +29,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         let sayItem = NSMenuItem(title: "Say Something", action: #selector(saySomething), keyEquivalent: "")
         quietItem.state = cat.isQuiet ? .on : .off
+        remindersItem.state = cat.remindersOn ? .on : .off
         let resetItem = NSMenuItem(title: "Bring Cat Back", action: #selector(resetPosition), keyEquivalent: "")
-        for item in [sayItem, quietItem, resetItem] {
+        for item in [sayItem, quietItem, remindersItem, resetItem] {
             item.target = self
             menu.addItem(item)
         }
@@ -66,12 +68,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func saySomething() {
-        cat.say(force: true)
+        cat.say()
+    }
+
+    @objc private func toggleReminders() {
+        cat.remindersOn.toggle()
+        remindersItem.state = cat.remindersOn ? .on : .off
     }
 
     @objc private func toggleQuiet() {
         cat.isQuiet.toggle()
         quietItem.state = cat.isQuiet ? .on : .off
+        remindersItem.state = cat.remindersOn ? .on : .off
     }
 
     @objc private func chooseSize(_ sender: NSMenuItem) {

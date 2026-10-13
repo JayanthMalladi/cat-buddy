@@ -3,7 +3,7 @@ import ImageIO
 
 /// The cat's states. Each one has an entry with the same name in animations.json.
 enum CatState: String, CaseIterable {
-    case resting, waking, awake, curious, happy, stretching, walking, yawning, curledSleeping
+    case curledSleeping, stretching, yawning, curious, happy, awake, resting
 }
 
 /// One entry of animations.json.
@@ -17,8 +17,6 @@ struct AnimationSpec: Decodable {
     let end: Int?
     /// Nudges the sprite up (positive) or down, in points, to line up ground lines.
     let offsetY: CGFloat?
-    /// State to go to when a one-shot animation finishes.
-    let next: String?
 }
 
 struct Manifest: Decodable {

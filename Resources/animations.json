@@ -1,14 +1,12 @@
 {
   "pointsPerPixel": 0.5,
   "animations": {
-    "resting":        { "folder": "resting",    "fps": 12, "loop": true,  "start": 0, "offsetY": 0 },
-    "waking":         { "folder": "awake",      "fps": 12, "loop": false, "start": 0, "offsetY": 0, "next": "awake" },
-    "awake":          { "folder": "awake",      "fps": 12, "loop": true,  "start": 47, "end": 47, "offsetY": 0 },
-    "curious":        { "folder": "curious",    "fps": 12, "loop": false, "start": 0, "offsetY": 0, "next": "awake" },
-    "happy":          { "folder": "happy",      "fps": 12, "loop": false, "start": 0, "offsetY": 0, "next": "awake" },
-    "stretching":     { "folder": "stretching", "fps": 12, "loop": false, "start": 0, "offsetY": 0, "next": "resting" },
-    "walking":        { "folder": "walking",    "fps": 12, "loop": true,  "start": 0, "offsetY": 0 },
-    "yawning":        { "folder": "yawning",    "fps": 12, "loop": false, "start": 0, "offsetY": 0, "next": "resting" },
-    "curledSleeping": { "folder": "sleeping",   "fps": 10, "loop": true,  "start": 0, "offsetY": 0 }
+    "curledSleeping": { "folder": "sleeping",   "fps": 10, "loop": true,  "start": 0, "offsetY": 0 },
+    "stretching":     { "folder": "stretching", "fps": 12, "loop": false, "start": 0, "offsetY": 0 },
+    "yawning":        { "folder": "yawning",    "fps": 12, "loop": false, "start": 0, "offsetY": 0 },
+    "curious":        { "folder": "curious",    "fps": 12, "loop": false, "start": 0, "offsetY": 0 },
+    "happy":          { "folder": "happy",      "fps": 12, "loop": false, "start": 0, "offsetY": 0 },
+    "awake":          { "folder": "awake",      "fps": 12, "loop": false, "start": 0, "offsetY": 0 },
+    "resting":        { "folder": "resting",    "fps": 12, "loop": true,  "start": 0, "offsetY": 0 }
   }
 }
