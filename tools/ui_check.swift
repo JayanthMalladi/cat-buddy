@@ -1,4 +1,4 @@
-// Drives a running CampusCat on the CI Mac: hovers over and drags the cat and saves
+// Drives a running CampusCat on the CI Mac: hovers over and drags the cat, waits for a walk, and saves
 // screenshots, so the app can be looked at without owning a Mac.
 // Usage: swift tools/ui_check.swift <pid> <output dir>
 import AppKit
@@ -124,8 +124,33 @@ let afterCorner = catBounds() ?? after
 let cornerMoved = hypot(afterCorner.minX - after.minX, afterCorner.minY - after.minY)
 print("dragging the empty corner moved the cat by \(Int(cornerMoved)) points (expected 0)")
 
+// CI sets walkEverySeconds to 150, so a walk comes due soon after the checks above.
+// Wait for her to set off on her own, then for her to stop on the other side.
+post(.mouseMoved, CGPoint(x: 400, y: 5))   // off the cat
+let beforeWalk = catBounds() ?? afterCorner
+var walkStarted = false
+var lastX = beforeWalk.minX
+var stillFor = 0
+for _ in 0..<180 {
+    wait(1)
+    guard let now = catBounds() else { continue }
+    if !walkStarted && abs(now.minX - beforeWalk.minX) > 20 {
+        walkStarted = true
+        shot("21-walking", around: now)
+    }
+    stillFor = abs(now.minX - lastX) < 1 ? stillFor + 1 : 0
+    lastX = now.minX
+    if walkStarted && stillFor >= 3 { break }
+}
+let afterWalk = catBounds() ?? beforeWalk
+shot("22-after-walk-whole-screen")
+let walked = abs(afterWalk.minX - beforeWalk.minX)
+print("the walk moved the cat by \(Int(walked)) points sideways and \(Int(abs(afterWalk.minY - beforeWalk.minY))) up or down")
+
 var failed = false
 if moved < 200 { print("FAIL: dragging the cat did not move it"); failed = true }
 if cornerMoved > 1 { print("FAIL: the transparent corner caught the mouse"); failed = true }
+if walked < 200 { print("FAIL: she didn't walk across the screen"); failed = true }
+if abs(afterWalk.minY - beforeWalk.minY) > 1 { print("FAIL: walking moved her up or down"); failed = true }
 print(failed ? "UI check failed" : "UI check passed")
 exit(failed ? 1 : 0)

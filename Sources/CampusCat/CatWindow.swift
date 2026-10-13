@@ -49,8 +49,14 @@ final class CatView: NSView {
 
     /// Moves the sprite up or down inside the window (points).
     func setOffsetY(_ offset: CGFloat) {
+        // bounds/position rather than frame, because the sprite may be mirrored.
         sprite.bounds = CGRect(origin: .zero, size: bounds.size)
         sprite.position = CGPoint(x: bounds.midX, y: bounds.midY + offset)
+    }
+
+    /// Mirrors the sprite so the walking cat faces left.
+    func setFacingLeft(_ left: Bool) {
+        sprite.setAffineTransform(left ? CGAffineTransform(scaleX: -1, y: 1) : .identity)
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
@@ -86,6 +92,7 @@ final class CatView: NSView {
         guard let window = window, let image = image, let rootLayer = layer else { return false }
         let windowPoint = window.convertPoint(fromScreen: screenPoint)
         let viewPoint = convert(windowPoint, from: nil)
+        // Converting through the layer also undoes the mirror transform.
         let p = sprite.convert(viewPoint, from: rootLayer)
         let size = sprite.bounds.size
         guard size.width > 0, size.height > 0,

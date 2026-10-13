@@ -7,6 +7,7 @@
     "curious":        { "folder": "curious",    "fps": 12, "loop": false, "start": 0, "offsetY": 0 },
     "happy":          { "folder": "happy",      "fps": 12, "loop": false, "start": 0, "offsetY": 0 },
     "awake":          { "folder": "awake",      "fps": 12, "loop": false, "start": 0, "offsetY": 0 },
-    "resting":        { "folder": "resting",    "fps": 12, "loop": true,  "start": 0, "offsetY": 0 }
+    "resting":        { "folder": "resting",    "fps": 12, "loop": true,  "start": 0, "offsetY": 0 },
+    "walking":        { "folder": "walking",    "fps": 12, "loop": true,  "start": 0, "offsetY": 0 }
   }
 }

@@ -4,6 +4,8 @@ import AppKit
 ///
 /// curledSleeping --hover--> one random action (+ a message, if the cooldown allows) -> curledSleeping
 /// Clicking shows a message (with the same cooldown).
+/// Every 5 minutes she wakes up and walks to the other side of the screen (no message), then
+/// sleeps there. Hovering does nothing while she walks.
 /// Timed messages (Messages menu) and reminders (reminders.json) play a short pose and speak,
 /// then she goes back to sleep.
 @MainActor
@@ -30,14 +32,26 @@ final class CatController: NSObject {
     private var nextMessageAt = Date()
     private var lastInteractiveMessageAt = Date.distantPast
 
+    private var nextWalkAt = Date()
+    private var walkingRight = true
+
     private var tickTimer: Timer?
     private var hoverTimer: Timer?
+    private var walkTimer: Timer?
 
     // Timing knobs, in seconds.
     /// Minimum gap between messages from hovering or clicking.
     private let interactiveMessageCooldown: TimeInterval = 2 * 60
     /// How long the resting pose lasts before she curls back up.
     private let restingLingers: TimeInterval = 6
+    /// Gap between walks. The hidden `walkEverySeconds` default overrides it (used by CI).
+    private var walkInterval: TimeInterval {
+        let saved = UserDefaults.standard.double(forKey: "walkEverySeconds")
+        return saved > 0 ? saved : 5 * 60
+    }
+    private let walkSpeed: CGFloat = 60   // points per second
+    /// How far from the screen edge she stops.
+    private let walkMargin: CGFloat = 40
 
     /// Message interval choices offered in the menu bar, in minutes.
     static let messageIntervals: [Int] = [5, 15, 30, 60]
@@ -122,6 +136,7 @@ final class CatController: NSObject {
         panel.orderFrontRegardless()
         scheduleNextMessage()
         reminders.restart()
+        nextWalkAt = Date().addingTimeInterval(walkInterval)
         enter(.curledSleeping)
 
         let tick = Timer(timeInterval: 1, target: self, selector: #selector(tick),
@@ -142,6 +157,7 @@ final class CatController: NSObject {
         state = newState
         stateEnteredAt = Date()
         let spec = manifest.spec(newState)
+        if newState != .walking { stopWalking() }
         view.setOffsetY((spec.offsetY ?? 0) * scale)
         player.play(frameStore.frames(for: spec), fps: spec.fps, loop: spec.loop) { [weak self] in
             self?.finished(newState)
@@ -155,8 +171,15 @@ final class CatController: NSObject {
     }
 
     /// Plays the next animation in the sequence, or goes back to sleep when it's done.
+    /// If a walk came due during an action, she sets off as soon as the action ends.
     private func advance() {
-        enter(queue.isEmpty ? .curledSleeping : queue.removeFirst())
+        if !queue.isEmpty {
+            enter(queue.removeFirst())
+        } else if Date() >= nextWalkAt {
+            startWalking()
+        } else {
+            enter(.curledSleeping)
+        }
     }
 
     /// Starts a sequence, but only while she's asleep, so a sequence always plays to the end.
@@ -178,6 +201,7 @@ final class CatController: NSObject {
 
     /// A click shows a message (even in Quiet Mode, since she was asked), subject to the cooldown.
     private func clicked() {
+        guard state != .walking else { return }   // walks are silent
         sayInteractive(force: true)
     }
 
@@ -187,6 +211,12 @@ final class CatController: NSObject {
         if state == .resting && now.timeIntervalSince(stateEnteredAt) > restingLingers {
             advance()
         }
+
+        if state == .curledSleeping && now >= nextWalkAt {
+            startWalking()
+        }
+        // Nothing else starts while she walks; it waits until she's asleep on the other side.
+        guard state != .walking else { return }
 
         if now > nextMessageAt {
             scheduleNextMessage()
@@ -200,6 +230,53 @@ final class CatController: NSObject {
             _ = act([reminder.animation.flatMap(CatState.init(rawValue:)) ?? .resting])
             bubble.show(reminder.text, above: panel)
         }
+    }
+
+    // MARK: - Walking
+
+    /// Walks to the far side of the screen (the side with more room), then sleeps there.
+    private func startWalking() {
+        queue = []
+        bubble.hide()
+        if let screen = (panel.screen ?? NSScreen.main)?.visibleFrame {
+            walkingRight = screen.maxX - panel.frame.maxX >= panel.frame.minX - screen.minX
+        }
+        enter(.walking)
+        let timer = Timer(timeInterval: 1.0 / 30, target: self, selector: #selector(stepWalk),
+                          userInfo: nil, repeats: true)
+        RunLoop.main.add(timer, forMode: .common)
+        walkTimer = timer
+    }
+
+    @objc private func stepWalk(_ timer: Timer) {
+        guard !view.isTracking else { return }   // being dragged: carry on from wherever she's dropped
+        guard let screen = (panel.screen ?? NSScreen.main)?.visibleFrame else {
+            enter(.curledSleeping)
+            return
+        }
+        // Worked out every step, so resizing or dragging her mid-walk still ends on screen.
+        let targetX = walkingRight ? screen.maxX - panel.frame.width - walkMargin : screen.minX + walkMargin
+        var origin = panel.frame.origin
+        let remaining = targetX - origin.x
+        let step = walkSpeed * CGFloat(timer.timeInterval)
+        view.setFacingLeft(remaining < 0)   // the walking art faces right
+        if abs(remaining) <= step {
+            origin.x = targetX
+            panel.setFrameOrigin(origin)
+            enter(.curledSleeping)
+        } else {
+            origin.x += remaining < 0 ? -step : step
+            panel.setFrameOrigin(origin)
+        }
+    }
+
+    private func stopWalking() {
+        guard let timer = walkTimer else { return }
+        timer.invalidate()
+        walkTimer = nil
+        view.setFacingLeft(false)
+        nextWalkAt = Date().addingTimeInterval(walkInterval)
+        savePosition()
     }
 
     // MARK: - Messages
