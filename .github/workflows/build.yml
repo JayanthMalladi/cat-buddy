@@ -18,9 +18,9 @@ jobs:
       - name: Build CampusCat.app
         run: ./scripts/build_app.sh
 
-      - name: Check the app starts
+      - name: Check the app starts, then click, drag and screenshot it
         run: |
-          # Launch the real binary for a few seconds; fail if it crashes on startup.
+          # Launch the real binary; fail if it crashes on startup.
           build/CampusCat.app/Contents/MacOS/CampusCat &
           PID=$!
           sleep 5
@@ -29,8 +29,18 @@ jobs:
             echo "CampusCat exited during startup"
             exit 1
           fi
-          kill "$PID"
           echo "CampusCat was still running after 5 seconds"
+          swift tools/ui_check.swift "$PID" build/screenshots
+          kill -0 "$PID" || { echo "CampusCat crashed during the UI check"; exit 1; }
+          kill "$PID"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: build/screenshots
+          if-no-files-found: ignore
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
