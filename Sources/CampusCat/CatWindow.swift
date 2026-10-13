@@ -19,10 +19,9 @@ final class CatPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-/// Shows the sprite, moves the window when dragged and reports clicks.
+/// Shows the sprite and moves the window when dragged.
 final class CatView: NSView {
     let sprite = CALayer()
-    var onClick: (() -> Void)?
     var onDragEnd: (() -> Void)?
     private(set) var isTracking = false
 
@@ -82,8 +81,6 @@ final class CatView: NSView {
         isTracking = false
         if dragged {
             onDragEnd?()
-        } else {
-            onClick?()
         }
     }
 

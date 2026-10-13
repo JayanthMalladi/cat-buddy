@@ -1,4 +1,4 @@
-// Drives a running CampusCat on the CI Mac: clicks and drags the cat and saves
+// Drives a running CampusCat on the CI Mac: hovers over and drags the cat and saves
 // screenshots, so the app can be looked at without owning a Mac.
 // Usage: swift tools/ui_check.swift <pid> <output dir>
 import AppKit
@@ -51,13 +51,12 @@ func shot(_ name: String, around rect: CGRect? = nil) {
 /// A point on the cat's body: middle of the window, a bit below centre.
 func catPoint(_ r: CGRect) -> CGPoint { CGPoint(x: r.midX, y: r.minY + r.height * 0.65) }
 
-func click(_ r: CGRect) {
-    let p = catPoint(r)
-    post(.mouseMoved, p)
-    wait(0.3)   // the app checks the pointer 15 times a second before accepting clicks
-    post(.leftMouseDown, p)
-    wait(0.05)
-    post(.leftMouseUp, p)
+/// Moves the pointer off the cat and back onto her, and rests it there.
+func hover(_ r: CGRect) {
+    post(.mouseMoved, CGPoint(x: r.minX - 200, y: r.midY))
+    wait(0.4)
+    post(.mouseMoved, catPoint(r))
+    wait(0.8)   // the app wants the pointer to rest on her for 0.4 s
 }
 
 var bounds: CGRect?
@@ -72,19 +71,20 @@ guard var cat = bounds else {
 print("cat window at \(cat)")
 
 wait(2)
-shot("01-resting", around: cat)
+shot("01-sleeping", around: cat)
 shot("00-whole-screen")
 
-click(cat)
-wait(1.5)
+hover(cat)
+wait(1)
 shot("02-waking", around: cat)
-wait(3.5)
-shot("03-awake", around: cat)
+wait(4)
+shot("03-first-action", around: cat)
+wait(6)
 
-// A few reactions; happy always shows a speech bubble, the others sometimes do.
+// A few more random actions.
 for round in 1...6 {
     cat = catBounds() ?? cat
-    click(cat)
+    hover(cat)
     wait(1.5)
     shot(String(format: "%02d-reaction-%d-a", 3 + round, round), around: cat)
     wait(2)

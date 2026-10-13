@@ -2,10 +2,10 @@ import AppKit
 
 /// Owns the cat window and runs the state machine.
 ///
-/// resting --click--> waking --> awake --click--> curious | happy | stretching | walking
-/// awake --(idle)--> resting (sometimes via yawning)
-/// resting --(now and then)--> yawning --> resting
-/// resting --(long idle)--> yawning --> curledSleeping --click--> waking
+/// curledSleeping --hover--> waking --> curious | happy | stretching | walking
+/// awake --hover--> curious | happy | stretching | walking
+/// reaction --> awake --(15 s)--> yawning --> curledSleeping
+/// Messages come on a timer (Messages menu); if she is asleep she wakes up to say them.
 @MainActor
 final class CatController: NSObject {
     private let manifest: Manifest
@@ -16,14 +16,18 @@ final class CatController: NSObject {
     private let view: CatView
     private let player: SpritePlayer
 
-    private(set) var state: CatState = .resting
+    private(set) var state: CatState = .curledSleeping
     private var stateEnteredAt = Date()
-    private var lastInteraction = Date()
     private var goingToSleep = false
     private var sayAfterWaking = false
+    private var reactAfterWaking = false
 
-    private var lastMessageAt = Date.distantPast
-    private var nextSpontaneousMessage = Date().addingTimeInterval(CatController.spontaneousGap())
+    // Hover: the pointer has to rest on the cat briefly, and leave again before the next action.
+    private var hoverStartedAt: Date?
+    private var hoverArmed = true
+    private let hoverDwell: TimeInterval = 0.4
+
+    private var nextMessageAt = Date()
 
     private var walkDirection: CGFloat = 1
     private var walkUntil = Date()
@@ -34,11 +38,27 @@ final class CatController: NSObject {
 
     // Timing knobs, in seconds.
     private let awakeLingers: TimeInterval = 15
-    private let fallAsleepAfter: TimeInterval = 10 * 60
-    private let messageCooldown: TimeInterval = 60
+    private let restingLingers: TimeInterval = 20
     private let walkSpeed: CGFloat = 45   // points per second
 
-    private static func spontaneousGap() -> TimeInterval { .random(in: 25 * 60...50 * 60) }
+    /// Message interval choices offered in the menu bar, in minutes.
+    static let messageIntervals: [Int] = [5, 15, 30, 60]
+
+    /// Minutes between timed messages.
+    var messageMinutes: Int {
+        get {
+            let saved = UserDefaults.standard.integer(forKey: "messageMinutes")
+            return saved > 0 ? saved : 15
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "messageMinutes")
+            scheduleNextMessage()
+        }
+    }
+
+    private func scheduleNextMessage() {
+        nextMessageAt = Date().addingTimeInterval(TimeInterval(messageMinutes * 60))
+    }
 
     var isQuiet: Bool {
         get { UserDefaults.standard.bool(forKey: "quiet") }
@@ -87,14 +107,14 @@ final class CatController: NSObject {
         super.init()
 
         panel.contentView = view
-        view.onClick = { [weak self] in self?.clicked() }
         view.onDragEnd = { [weak self] in self?.savePosition() }
     }
 
     func start() {
         panel.setFrameOrigin(savedOrDefaultOrigin())
         panel.orderFrontRegardless()
-        enter(.resting)
+        scheduleNextMessage()
+        enter(.curledSleeping)
 
         let tick = Timer(timeInterval: 1, target: self, selector: #selector(tick),
                          userInfo: nil, repeats: true)
@@ -140,8 +160,13 @@ final class CatController: NSObject {
             goingToSleep = false
             enter(.curledSleeping)
         case .waking:
-            enter(.awake)
+            if reactAfterWaking {
+                enter(randomReaction())
+            } else {
+                enter(.awake)
+            }
             if sayAfterWaking { say() }
+            reactAfterWaking = false
             sayAfterWaking = false
         default:
             let next = manifest.spec(finishedState).next.flatMap(CatState.init(rawValue:)) ?? .resting
@@ -149,46 +174,54 @@ final class CatController: NSObject {
         }
     }
 
-    private func clicked() {
-        lastInteraction = Date()
+    /// The pointer has rested on the cat: wake her if needed and do a random action.
+    private func hovered() {
         goingToSleep = false
         switch state {
         case .resting, .curledSleeping, .yawning:
-            sayAfterWaking = Double.random(in: 0..<1) < 0.35
+            reactAfterWaking = true
             enter(.waking)
         case .awake:
-            let reaction = weightedPick([(.curious, 3), (.happy, 3), (.walking, 2), (.stretching, 1)])
-            enter(reaction)
-            if reaction == .happy { say() }
-        case .walking:
-            enter(.awake)
-        case .waking, .curious, .happy, .stretching:
-            break   // let the current animation finish
+            enter(randomReaction())
+        case .waking:
+            reactAfterWaking = true
+        case .walking, .curious, .happy, .stretching:
+            break   // let the current action finish
         }
+    }
+
+    private func randomReaction() -> CatState {
+        weightedPick([(.curious, 3), (.happy, 3), (.walking, 2), (.stretching, 1)])
     }
 
     @objc private func tick() {
         let now = Date()
         let inState = now.timeIntervalSince(stateEnteredAt)
-        let idle = now.timeIntervalSince(lastInteraction)
 
         switch state {
-        case .awake where inState > awakeLingers:
-            enter(Double.random(in: 0..<1) < 0.3 ? .yawning : .resting)
-        case .resting where idle > fallAsleepAfter:
+        case .awake where inState > awakeLingers, .resting where inState > restingLingers:
             goingToSleep = true
             enter(.yawning)
-        case .resting where inState > 60 && Double.random(in: 0..<1) < 1.0 / 240:
-            enter(.yawning)   // about one yawn every four minutes
         case .walking where now > walkUntil:
             enter(.awake)
         default:
             break
         }
 
-        if now > nextSpontaneousMessage {
-            nextSpontaneousMessage = now.addingTimeInterval(Self.spontaneousGap())
-            if state == .resting || state == .awake { say() }
+        if now > nextMessageAt {
+            scheduleNextMessage()
+            guard !isQuiet else { return }
+            switch state {
+            case .curledSleeping, .resting, .yawning:
+                // Wake up to say it.
+                goingToSleep = false
+                sayAfterWaking = true
+                enter(.waking)
+            case .waking:
+                sayAfterWaking = true
+            default:
+                say()
+            }
         }
     }
 
@@ -226,13 +259,10 @@ final class CatController: NSObject {
 
     // MARK: - Messages
 
-    /// Shows a preset line unless quiet mode or the cooldown says not to.
+    /// Shows a preset line (unless quiet mode is on and it wasn't asked for from the menu).
     func say(force: Bool = false) {
-        if !force {
-            guard !isQuiet, Date().timeIntervalSince(lastMessageAt) > messageCooldown else { return }
-        }
+        if isQuiet && !force { return }
         guard let text = messages.next() else { return }
-        lastMessageAt = Date()
         bubble.show(text, above: panel)
     }
 
@@ -241,12 +271,31 @@ final class CatController: NSObject {
     @objc private func updateClickThrough() {
         if view.isTracking {
             panel.ignoresMouseEvents = false
+            hoverArmed = false   // a drag shouldn't also trigger an action
             return
         }
         let mouse = NSEvent.mouseLocation
         let overCat = panel.frame.contains(mouse) && view.hitsCat(atScreenPoint: mouse, image: player.currentImage)
         if panel.ignoresMouseEvents == overCat {
             panel.ignoresMouseEvents = !overCat
+        }
+        updateHover(overCat: overCat)
+    }
+
+    private func updateHover(overCat: Bool) {
+        guard overCat else {
+            hoverStartedAt = nil
+            hoverArmed = true
+            return
+        }
+        // Pressing the button (to drag) uses up this hover.
+        if NSEvent.pressedMouseButtons != 0 { hoverArmed = false }
+        guard hoverArmed else { return }
+        let started = hoverStartedAt ?? Date()
+        hoverStartedAt = started
+        if Date().timeIntervalSince(started) >= hoverDwell {
+            hoverArmed = false
+            hovered()
         }
     }
 
