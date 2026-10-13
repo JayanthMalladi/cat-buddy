@@ -16,7 +16,7 @@ After that it opens like any other app. It has no Dock icon; look for the paw pr
 ## Using it
 
 - She sleeps curled up by default.
-- **Rest the pointer on her** while she sleeps: she wakes up for one random action (stretch, yawn, head tilt, happy wiggle, sitting up, or a short rest) and goes back to sleep when it's done. Move the pointer off and back on for another.
+- **Rest the pointer on her** while she sleeps: she wakes up for one random action (stretch, yawn, head tilt, happy wiggle, sitting up, or a short rest) and goes back to sleep when it's done. Leaving the pointer on her won't start another one; move it away from her and back for that.
 - She also says a message when you hover or click, but at most once every 2 minutes. Inside that window she still does her action, just quietly.
 - **Drag the cat** to move her anywhere. She remembers where you put her.
 - Clicks on the empty space around her go straight through to whatever is behind.
