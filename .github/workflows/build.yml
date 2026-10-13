@@ -15,13 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build CampusCat.app
+      - name: Build the app
         run: ./scripts/build_app.sh
 
       - name: Check the app starts, then click, drag and screenshot it
         run: |
           # Launch the real binary; fail if it crashes on startup.
-          build/CampusCat.app/Contents/MacOS/CampusCat &
+          "build/Vrinda's Cat.app/Contents/MacOS/CampusCat" &
           PID=$!
           sleep 5
           if ! kill -0 "$PID" 2>/dev/null; then
@@ -45,8 +45,8 @@ jobs:
       - name: Upload zip
         uses: actions/upload-artifact@v4
         with:
-          name: CampusCat
-          path: build/CampusCat.zip
+          name: VrindasCat
+          path: build/VrindasCat.zip
 
       - name: Publish "latest" release
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -54,7 +54,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest build/CampusCat.zip \
-            --title "Campus Cat (latest build)" \
-            --notes "Built from ${GITHUB_SHA::7}. Download CampusCat.zip below. See the README for the first-launch steps." \
+          gh release create latest build/VrindasCat.zip \
+            --title "Vrinda's Cat (latest build)" \
+            --notes "Built from ${GITHUB_SHA::7}. Download VrindasCat.zip below. See the README for the first-launch steps." \
             --target "$GITHUB_SHA"

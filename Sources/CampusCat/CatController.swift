@@ -2,9 +2,8 @@ import AppKit
 
 /// Owns the cat window and runs the state machine.
 ///
-/// curledSleeping --hover (+ a message)--> stretching -> yawning
-///     -> one of curious | happy | awake | yawning -> resting -> curledSleeping
-/// Clicking shows a message (with a cooldown shared with hover messages).
+/// curledSleeping --hover--> one random action (+ a message, if the cooldown allows) -> curledSleeping
+/// Clicking shows a message (with the same cooldown).
 /// Timed messages (Messages menu) and reminders (reminders.json) play a short pose and speak,
 /// then she goes back to sleep.
 @MainActor
@@ -36,7 +35,7 @@ final class CatController: NSObject {
 
     // Timing knobs, in seconds.
     /// Minimum gap between messages from hovering or clicking.
-    private let interactiveMessageCooldown: TimeInterval = 20
+    private let interactiveMessageCooldown: TimeInterval = 2 * 60
     /// How long the resting pose lasts before she curls back up.
     private let restingLingers: TimeInterval = 6
 
@@ -168,11 +167,11 @@ final class CatController: NSObject {
         return true
     }
 
-    /// The pointer has rested on the sleeping cat: she says something and runs through her routine.
+    /// The pointer has rested on the sleeping cat: she wakes for one random action, says something
+    /// if the message cooldown has passed, and goes back to sleep when the action ends.
     private func hovered() {
-        let middleOptions: [CatState] = [.curious, .happy, .awake, .yawning]
-        let middle = middleOptions.randomElement()!
-        if act([.stretching, .yawning, middle, .resting]) {
+        let actions: [CatState] = [.stretching, .yawning, .curious, .happy, .awake, .resting]
+        if act([actions.randomElement()!]) {
             sayInteractive(force: false)
         }
     }
