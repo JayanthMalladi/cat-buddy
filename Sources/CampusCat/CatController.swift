@@ -24,7 +24,8 @@ final class CatController: NSObject {
     /// Animations still to play in the current sequence; when it runs out she sleeps again.
     private var queue: [CatState] = []
 
-    // Hover: the pointer has to rest on the cat briefly, and leave again before the next action.
+    // Hover: the pointer has to rest on the cat briefly, and leave her window entirely before the
+    // next action (her outline changes as she moves, so just slipping off her fur doesn't count).
     private var hoverStartedAt: Date?
     private var hoverArmed = true
     private let hoverDwell: TimeInterval = 0.4
@@ -304,17 +305,18 @@ final class CatController: NSObject {
             return
         }
         let mouse = NSEvent.mouseLocation
-        let overCat = panel.frame.contains(mouse) && view.hitsCat(atScreenPoint: mouse, image: player.currentImage)
+        let inWindow = panel.frame.contains(mouse)
+        let overCat = inWindow && view.hitsCat(atScreenPoint: mouse, image: player.currentImage)
         if panel.ignoresMouseEvents == overCat {
             panel.ignoresMouseEvents = !overCat
         }
-        updateHover(overCat: overCat)
+        updateHover(overCat: overCat, inWindow: inWindow)
     }
 
-    private func updateHover(overCat: Bool) {
+    private func updateHover(overCat: Bool, inWindow: Bool) {
         guard overCat else {
             hoverStartedAt = nil
-            hoverArmed = true
+            if !inWindow { hoverArmed = true }
             return
         }
         // Pressing the button (to drag) uses up this hover.
