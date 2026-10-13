@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cat: CatController!
     private var statusItem: NSStatusItem!
     private var sizeItems: [NSMenuItem] = []
+    private var intervalItems: [NSMenuItem] = []
     private let quietItem = NSMenuItem(title: "Quiet Mode (no messages)", action: #selector(AppDelegate.toggleQuiet), keyEquivalent: "")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -45,6 +46,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         sizeItem.submenu = sizeMenu
         menu.addItem(sizeItem)
         updateSizeChecks()
+
+        let intervalMenu = NSMenu()
+        for minutes in CatController.messageIntervals {
+            let title = minutes < 60 ? "Every \(minutes) Minutes" : "Every Hour"
+            let item = NSMenuItem(title: title, action: #selector(chooseInterval(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = minutes
+            intervalMenu.addItem(item)
+            intervalItems.append(item)
+        }
+        let intervalItem = NSMenuItem(title: "Messages", action: nil, keyEquivalent: "")
+        intervalItem.submenu = intervalMenu
+        menu.addItem(intervalItem)
+        updateIntervalChecks()
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Campus Cat", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
@@ -62,6 +77,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func chooseSize(_ sender: NSMenuItem) {
         cat.scale = CatController.sizes[sender.tag].scale
         updateSizeChecks()
+    }
+
+    @objc private func chooseInterval(_ sender: NSMenuItem) {
+        cat.messageMinutes = sender.tag
+        updateIntervalChecks()
+    }
+
+    private func updateIntervalChecks() {
+        for item in intervalItems {
+            item.state = item.tag == cat.messageMinutes ? .on : .off
+        }
     }
 
     private func updateSizeChecks() {

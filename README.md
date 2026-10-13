@@ -1,6 +1,6 @@
 # Campus Cat
 
-A tiny cat that lives on your Mac desktop. She rests quietly in the corner, wakes up when you click her, reacts, and now and then says something kind in a speech bubble. Everything is offline: no accounts, no internet, no AI at runtime.
+A tiny cat that lives on your Mac desktop. She sleeps quietly in the corner, wakes up and does something cute when you rest the pointer on her, and every so often says something kind in a speech bubble. Everything is offline: no accounts, no internet, no AI at runtime.
 
 ## Download and open it
 
@@ -15,13 +15,15 @@ After that it opens like any other app. It has no Dock icon; look for the paw pr
 
 ## Using it
 
-- **Click the cat** to wake her up. Click again while she's awake for a reaction: a head tilt, a happy wiggle, a stretch, or a little walk.
+- She sleeps curled up by default. **Rest the pointer on her** for a moment and she wakes up and does something random: a head tilt, a happy wiggle, a stretch, or a little walk. Move the pointer off and back on for another one.
 - **Drag the cat** to move her anywhere. She remembers where you put her.
 - Clicks on the empty space around her go straight through to whatever is behind.
-- Left alone she goes back to resting, yawns now and then, and curls up to sleep after about ten minutes.
+- Left alone for about 15 seconds she yawns and curls back up to sleep.
+- She says one of the preset messages on a timer (every 15 minutes by default), waking up first if she's asleep.
 - **Menu bar paw:**
   - *Say Something* shows a message right away.
   - *Quiet Mode* turns off all speech bubbles.
+  - *Messages* sets how often she talks: every 5, 15 or 30 minutes, or every hour.
   - *Size* makes her Small, Medium, Large or Extra Large (remembered between launches).
   - *Bring Cat Back* moves her to the bottom-right corner if she ever gets lost off screen.
   - *Quit Campus Cat*.
@@ -32,7 +34,7 @@ To start it automatically, add it in **System Settings → General → Login Ite
 
 Both files are plain JSON inside the app (right-click CampusCat.app → *Show Package Contents* → `Contents/Resources`), and in this repo under `Resources/`.
 
-- `messages.json`: lists of messages grouped by category. Add or remove lines freely. The cat waits at least a minute between messages, never repeats the last few, and on her own speaks only every 25–50 minutes.
+- `messages.json`: lists of messages grouped by category. Add or remove lines freely. The cat never repeats the last few, and talks on the interval chosen in the menu.
 - `animations.json`: one entry per state with `fps`, `loop`, the frame range (`start`, `end`), `offsetY` (points, to nudge a pose up or down) and `next` (the state after a one-shot animation).
 
 Editing files inside the app breaks its signature; after editing, run `codesign --force --deep --sign - /Applications/CampusCat.app` in Terminal (or rebuild).
@@ -61,7 +63,7 @@ python3 tools/prepare_sprites.py /path/to/sprites_repaired
 | File | What it does |
 |---|---|
 | `App.swift`, `AppDelegate.swift` | Startup and the menu bar item |
-| `CatController.swift` | The state machine: which animation plays, clicks, idle timers, walking, messages |
+| `CatController.swift` | The state machine: which animation plays, hover, idle timers, walking, messages |
 | `CatWindow.swift` | The transparent always-on-top window, dragging, and pixel-accurate click-through |
 | `Animation.swift` | Reads `animations.json`, loads frames, plays them |
 | `SpeechBubble.swift`, `Messages.swift` | The bubble and the message picker |
