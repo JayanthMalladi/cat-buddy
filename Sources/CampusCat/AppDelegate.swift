@@ -3,6 +3,7 @@ import AppKit
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cat: CatController!
+    private let updater = Updater()
     private var statusItem: NSStatusItem!
     private var sizeItems: [NSMenuItem] = []
     private var intervalItems: [NSMenuItem] = []
@@ -13,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         cat = CatController()
         cat.start()
         setUpMenuBar()
+        updater.start()
     }
 
     private func setUpMenuBar() {
@@ -63,12 +65,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(intervalItem)
         updateIntervalChecks()
         menu.addItem(.separator())
+        let updateItem = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "")
+        updateItem.target = self
+        menu.addItem(updateItem)
+        let versionItem = NSMenuItem(title: "Vrinda's Cat, \(updater.versionLabel)", action: nil, keyEquivalent: "")
+        versionItem.isEnabled = false
+        menu.addItem(versionItem)
         menu.addItem(NSMenuItem(title: "Quit Vrinda's Cat", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
 
     @objc private func saySomething() {
         cat.say()
+    }
+
+    @objc private func checkForUpdates() {
+        Task {
+            switch await updater.check() {
+            case .upToDate: cat.show("I'm already up to date!")
+            case .updating: cat.show("Updating… back in a second!")
+            case .unavailable(let reason): cat.show(reason)
+            }
+        }
     }
 
     @objc private func toggleReminders() {

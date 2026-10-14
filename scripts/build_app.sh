@@ -25,6 +25,10 @@ for size in 16 32 128 256 512; do
 done
 iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 
+# The commit this was built from; the app compares it with the latest release to update itself.
+# Local builds leave it empty and never self-update.
+/usr/libexec/PlistBuddy -c "Add :CatBuildCommit string ${GITHUB_SHA:-}" "$APP/Contents/Info.plist"
+
 # Ad-hoc signature: free, no certificate. Apple Silicon refuses to run unsigned code at all.
 codesign --force --deep --sign - "$APP"
 codesign --verify --verbose "$APP"
