@@ -22,6 +22,8 @@ jobs:
         run: |
           # Walk every 150 s instead of 5 min so the check can see one.
           defaults write com.campuscat.buddy walkEverySeconds -float 150
+          # Don't let the app under test replace itself with the published release.
+          defaults write com.campuscat.buddy autoUpdate -bool false
           # Launch the real binary; fail if it crashes on startup.
           "build/Vrinda's Cat.app/Contents/MacOS/CampusCat" &
           PID=$!
@@ -35,6 +37,41 @@ jobs:
           swift tools/ui_check.swift "$PID" build/screenshots
           kill -0 "$PID" || { echo "CampusCat crashed during the UI check"; exit 1; }
           kill "$PID"
+
+      - name: Check the app updates itself
+        run: |
+          # Serve this build as a "release" from a local folder, make a copy of the app pretend to
+          # be an old build, and check it replaces itself with the new one and reopens.
+          FEED="$RUNNER_TEMP/feed"
+          mkdir -p "$FEED"
+          cp build/VrindasCat.zip build/version.txt "$FEED/"
+          DIR="$RUNNER_TEMP/update-test"
+          APP="$DIR/Vrinda's Cat.app"
+          mkdir -p "$DIR"
+          cp -R "build/Vrinda's Cat.app" "$DIR/"
+          /usr/libexec/PlistBuddy -c "Set :CatBuildCommit pretend-old-build" "$APP/Contents/Info.plist"
+          codesign --force --deep --sign - "$APP"
+          BEFORE=$(shasum "$APP/Contents/Info.plist" | cut -d' ' -f1)
+          defaults write com.campuscat.buddy autoUpdate -bool true
+          defaults write com.campuscat.buddy updateFeed "file://$FEED/"
+          "$APP/Contents/MacOS/CampusCat" > "$RUNNER_TEMP/update-app.log" 2>&1 &
+          OLD_PID=$!
+          for i in $(seq 1 40); do
+            sleep 3
+            AFTER=$(shasum "$APP/Contents/Info.plist" | cut -d' ' -f1)
+            NEW_PID=$(pgrep -f "$APP/Contents/MacOS/CampusCat" | grep -v "^$OLD_PID$" | head -1 || true)
+            if [ "$AFTER" != "$BEFORE" ] && [ -n "$NEW_PID" ]; then
+              echo "Updated after about $((i * 3)) seconds and reopened as pid $NEW_PID"
+              /usr/libexec/PlistBuddy -c "Print :CatBuildCommit" "$APP/Contents/Info.plist"
+              kill "$NEW_PID" || true
+              defaults delete com.campuscat.buddy updateFeed
+              exit 0
+            fi
+          done
+          echo "The app did not replace itself with the new build. Its log:"
+          cat "$RUNNER_TEMP/update-app.log"
+          kill "$OLD_PID" 2>/dev/null || true
+          exit 1
 
       - name: Upload screenshots
         if: always()
@@ -56,7 +93,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest build/VrindasCat.zip \
+          gh release create latest build/VrindasCat.zip build/version.txt \
             --title "Vrinda's Cat (latest build)" \
             --notes "Built from ${GITHUB_SHA::7}. Download VrindasCat.zip below. See the README for the first-launch steps." \
             --target "$GITHUB_SHA"

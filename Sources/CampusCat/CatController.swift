@@ -13,6 +13,7 @@ final class CatController: NSObject {
     private let manifest: Manifest
     private let frameStore: FrameStore
     private let messages = Messages()
+    private var remoteMessages: RemoteMessages?
     private let reminders = Reminders()
     private let bubble = SpeechBubble()
     private let panel: CatPanel
@@ -137,6 +138,9 @@ final class CatController: NSObject {
         panel.orderFrontRegardless()
         scheduleNextMessage()
         reminders.restart()
+        let remote = RemoteMessages(messages: messages)
+        remote.start()
+        remoteMessages = remote
         nextWalkAt = Date().addingTimeInterval(walkInterval)
         enter(.curledSleeping)
 
@@ -285,6 +289,16 @@ final class CatController: NSObject {
     /// Shows a random preset line (from the menu: always).
     func say() {
         guard let text = messages.next() else { return }
+        bubble.show(text, above: panel)
+    }
+
+    /// Shows a line that isn't one of the preset messages (e.g. about updates).
+    /// Points the messages at a new share link (see RemoteMessages).
+    func setMessagesLink(_ text: String) -> Bool {
+        remoteMessages?.setLink(text) ?? false
+    }
+
+    func show(_ text: String) {
         bubble.show(text, above: panel)
     }
 
