@@ -24,6 +24,9 @@ jobs:
           defaults write com.campuscat.buddy walkEverySeconds -float 150
           # Don't let the app under test replace itself with the published release.
           defaults write com.campuscat.buddy autoUpdate -bool false
+          # Keep the to-do note and its check-ins out of the way; the next step looks at them.
+          defaults write com.campuscat.buddy todoNoteOpen -bool false
+          defaults write com.campuscat.buddy checkInTimes "$(date -v+12H +%H:%M)"
           # Launch the real binary; fail if it crashes on startup.
           "build/Vrinda's Cat.app/Contents/MacOS/CampusCat" &
           PID=$!
@@ -37,6 +40,45 @@ jobs:
           swift tools/ui_check.swift "$PID" build/screenshots
           kill -0 "$PID" || { echo "CampusCat crashed during the UI check"; exit 1; }
           kill "$PID"
+
+      - name: Check the to-do note, a nudge and a check-in
+        run: |
+          # Give her a list, a nudge from the "sheet" (a local file) and a check-in a minute from
+          # now, then screenshot the note, the nudge and the check-in.
+          SUPPORT="$HOME/Library/Application Support/Vrinda's Cat"
+          mkdir -p "$SUPPORT"
+          cat > "$SUPPORT/todos.json" <<EOF
+          {"day":"$(date +%Y-%m-%d)","items":[
+            {"id":"6F1C2B4A-1D2E-4F00-9A00-000000000001","text":"Finish the lab report","done":true},
+            {"id":"6F1C2B4A-1D2E-4F00-9A00-000000000002","text":"Call Mom","done":false},
+            {"id":"6F1C2B4A-1D2E-4F00-9A00-000000000003","text":"30 minute walk","done":false},
+            {"id":"6F1C2B4A-1D2E-4F00-9A00-000000000004","text":"Reply to the club email","done":false}]}
+          EOF
+          printf 'Nudge,"Go finish that lab report, I believe in you!"\nCheck-in times,%s\n' "$(date -v+1M +%H:%M)" > "$RUNNER_TEMP/control.csv"
+          defaults write com.campuscat.buddy todoNoteOpen -bool true
+          defaults write com.campuscat.buddy controlFeed "file://$RUNNER_TEMP/control.csv"
+          defaults write com.campuscat.buddy walkEverySeconds -float 3600
+          defaults delete com.campuscat.buddy lastNudge 2>/dev/null || true
+          defaults delete com.campuscat.buddy lastCheckIn 2>/dev/null || true
+          "build/Vrinda's Cat.app/Contents/MacOS/CampusCat" > "$RUNNER_TEMP/todo-app.log" 2>&1 &
+          PID=$!
+          sleep 4
+          screencapture -x build/screenshots/30-note-and-nudge.png
+          sleep 70
+          screencapture -x build/screenshots/31-check-in.png
+          if ! kill -0 "$PID" 2>/dev/null; then
+            echo "CampusCat crashed. Its log:"
+            cat "$RUNNER_TEMP/todo-app.log"
+            exit 1
+          fi
+          kill "$PID"
+          sleep 1
+          # Her list was saved, and the nudge and the check-in both ran.
+          grep -q "Call Mom" "$SUPPORT/todos.json" || { echo "The to-do list was lost"; exit 1; }
+          grep -q "Go finish that lab report" <(defaults read com.campuscat.buddy lastNudge) || { echo "The nudge was not delivered"; exit 1; }
+          defaults read com.campuscat.buddy lastCheckIn || { echo "The check-in did not run"; exit 1; }
+          defaults delete com.campuscat.buddy controlFeed
+          defaults write com.campuscat.buddy todoNoteOpen -bool false
 
       - name: Check the app updates itself
         run: |

@@ -26,6 +26,7 @@ You only do this once: from then on the app **updates itself** (see below).
 - Every so often (every 15 minutes by default) she rests and says a random message on her own.
 - **Reminders** come on their own schedule: drink water every hour, stretch every 90 minutes (she stretches with you), and a snack check every 4 hours.
 - **Menu bar paw:**
+  - *To-Do Note* shows or tucks away her to-do note.
   - *Say Something* shows a message right away.
   - *Quiet Mode* stops everything she says on her own (hover, timed messages and reminders). Clicking her still gets you one.
   - *Water & Stretch Reminders* turns the reminders on or off.
@@ -37,6 +38,32 @@ You only do this once: from then on the app **updates itself** (see below).
   - *Quit Vrinda's Cat*.
 
 To start it automatically, add it in **System Settings → General → Login Items**.
+
+## Her to-do note
+
+A little yellow sticky note sits beside the cat and follows her when she walks (it hops to her other side when she gets near the edge of the screen).
+
+- **Add a task any time of day:** click the "+ Add a task" box, type, and press Return. Escape stops typing. Up to 10 tasks.
+- **Click a task** to tick it off. The cat does a happy wiggle and says how many are left; each finished task fills in a paw print.
+- **Right-click a task** to delete it.
+- The **–** button tucks the note away; *To-Do Note* in the paw menu brings it back.
+- **Check-ins:** at 11:00, 15:00 and 19:00 (her Mac's time) she asks about the oldest unfinished task by name, e.g. "Psst. Did "Call Mom" happen yet?", and the last one of the day is a "last call". With an empty list she asks what's on for today instead, and she stays quiet when everything is done. A check-in missed by more than two hours (the Mac was asleep) is skipped. Quiet Mode keeps her quiet, but the note still pops back up.
+- **New day:** finished tasks are cleared and unfinished ones carry over.
+- The list is saved in `~/Library/Application Support/Vrinda's Cat/todos.json`, so it survives restarts and updates.
+
+### Nudging her from the sheet
+
+The messages sheet can have a tab named **Control** with a name in column A and a value in column B:
+
+| A | B |
+|---|---|
+| Nudge | Go finish that lab report, I believe in you! |
+| Check-in times | 11:00, 15:00, 19:00 |
+
+- **Nudge:** type a new line and the cat says it within a few minutes (she checks every 2 minutes), even in Quiet Mode, and brings the note back up if tasks are left. She says each nudge once; to send the same words again, change them slightly.
+- **Check-in times:** comma-separated times in her time zone, like `10am, 2pm, 8pm` or `9:30, 13:00, 21:00`. Clear the cell to go back to 11:00, 15:00 and 19:00.
+
+It uses the same share link as the messages, so there is nothing more to set up on her Mac.
 
 ## Updates and new messages
 
@@ -83,3 +110,5 @@ python3 tools/prepare_sprites.py /path/to/sprites_repaired
 | `CatWindow.swift` | The transparent always-on-top window, dragging, and pixel-accurate click-through |
 | `Animation.swift` | Reads `animations.json`, loads frames, plays them |
 | `SpeechBubble.swift`, `Messages.swift` | The bubble and the message picker |
+| `Todos.swift`, `TodoNote.swift` | The to-do list, its check-in times, and the sticky note window |
+| `RemoteControl.swift` | Reads nudges and check-in times from the sheet's Control tab |
