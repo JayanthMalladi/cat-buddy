@@ -8,6 +8,8 @@ import AppKit
 /// sleeps there. Hovering does nothing while she walks.
 /// Timed messages (Messages menu) and reminders (reminders.json) play a short pose and speak,
 /// then she goes back to sleep.
+/// Her to-do note sits beside her. At the check-in times she asks about an unfinished task by
+/// name, she celebrates each one that gets ticked off, and she passes on nudges from the sheet.
 @MainActor
 final class CatController: NSObject {
     private let manifest: Manifest
@@ -15,6 +17,13 @@ final class CatController: NSObject {
     private let messages = Messages()
     private var remoteMessages: RemoteMessages?
     private let reminders = Reminders()
+    private let todos: TodoList
+    private let note: TodoNote
+    private let remoteControl = RemoteControl()
+    /// A nudge from the sheet waiting for her to finish a walk.
+    private var pendingNudge: String?
+    /// Timed messages and reminders hold off until then, so they don't cover a check-in or nudge.
+    private var holdChatterUntil = Date.distantPast
     private let bubble = SpeechBubble()
     private let panel: CatPanel
     private let view: CatView
@@ -126,11 +135,20 @@ final class CatController: NSObject {
         panel = CatPanel(size: size)
         self.view = view
         player = SpritePlayer(layer: view.sprite)
+        let todos = TodoList()
+        self.todos = todos
+        note = TodoNote(list: todos)
         super.init()
 
         panel.contentView = view
         view.onClick = { [weak self] in self?.clicked() }
-        view.onDragEnd = { [weak self] in self?.savePosition() }
+        view.onDragEnd = { [weak self] in
+            self?.savePosition()
+            self?.note.place()
+        }
+        note.onToggle = { [weak self] item, done in self?.taskToggled(item, done: done) }
+        note.onAdd = { [weak self] _ in self?.taskAdded() }
+        remoteControl.onNudge = { [weak self] text in self?.pendingNudge = text }
     }
 
     func start() {
@@ -141,6 +159,8 @@ final class CatController: NSObject {
         let remote = RemoteMessages(messages: messages)
         remote.start()
         remoteMessages = remote
+        remoteControl.start()
+        note.attach(to: panel)
         nextWalkAt = Date().addingTimeInterval(walkInterval)
         enter(.curledSleeping)
 
@@ -223,6 +243,17 @@ final class CatController: NSObject {
         // Nothing else starts while she walks; it waits until she's asleep on the other side.
         guard state != .walking else { return }
 
+        todos.rollOverIfNewDay()
+        if let nudge = pendingNudge, now >= holdChatterUntil {
+            pendingNudge = nil
+            deliverNudge(nudge)
+            return
+        }
+        if now >= holdChatterUntil, let isLast = CheckIns.due(at: now) {
+            checkIn(isLast: isLast)
+        }
+        guard now >= holdChatterUntil else { return }
+
         if now > nextMessageAt {
             scheduleNextMessage()
             if !isQuiet, let text = messages.next() {
@@ -273,6 +304,68 @@ final class CatController: NSObject {
             origin.x += remaining < 0 ? -step : step
             panel.setFrameOrigin(origin)
         }
+        note.place()
+    }
+
+    // MARK: - To-do list
+
+    var isNoteOpen: Bool {
+        get { note.isOpen }
+        set { note.setOpen(newValue) }
+    }
+
+    /// Lets the menu keep its tick in step when the note's own – button tucks it away.
+    func onNoteOpenChange(_ handler: @escaping () -> Void) {
+        note.onOpenChange = handler
+    }
+
+    private func taskToggled(_ item: TodoItem, done: Bool) {
+        guard done else { return }
+        let left = todos.open.count
+        _ = act([.happy])
+        switch left {
+        case 0: bubble.show("All done! I'm so proud of you.", above: panel)
+        case 1: bubble.show("You did it! Just one to go.", above: panel)
+        default: bubble.show("You did it! \(left) to go.", above: panel)
+        }
+    }
+
+    /// The first task of an empty list gets a little hello; after that she stays quiet while typing.
+    private func taskAdded() {
+        guard todos.items.count == 1 else { return }
+        bubble.show("Got it. I'll keep an eye on it for you.", above: panel)
+    }
+
+    /// At each check-in time she asks about the oldest unfinished task by name.
+    private func checkIn(isLast: Bool) {
+        let open = todos.open
+        let text: String
+        if todos.items.isEmpty {
+            guard !isLast else { return }   // too late in the day to start a list
+            text = "What are we doing today? Add a task to my note."
+        } else if let first = open.first {
+            if isLast {
+                text = open.count == 1 ? "Last call! Did \"\(first.text)\" happen?"
+                                       : "Last call! \(open.count) left, starting with \"\(first.text)\"."
+            } else {
+                text = "Psst. Did \"\(first.text)\" happen yet?"
+            }
+        } else {
+            return   // everything's done; let her be
+        }
+        if !note.isOpen { note.setOpen(true) }
+        guard !isQuiet else { return }
+        _ = act([.curious])
+        bubble.show(text, above: panel)
+        holdChatterUntil = Date().addingTimeInterval(20)
+    }
+
+    /// A nudge typed into the sheet's Control tab. She says it even in Quiet Mode, since it's from him.
+    private func deliverNudge(_ text: String) {
+        _ = act([.happy])
+        bubble.show(text, above: panel)
+        if !todos.open.isEmpty && !note.isOpen { note.setOpen(true) }
+        holdChatterUntil = Date().addingTimeInterval(20)
     }
 
     private func stopWalking() {
@@ -358,11 +451,13 @@ final class CatController: NSObject {
         view.frame = NSRect(origin: .zero, size: size)
         view.setOffsetY((manifest.spec(state).offsetY ?? 0) * scale)
         savePosition()
+        note.place()
     }
 
     func resetPosition() {
         panel.setFrameOrigin(defaultOrigin())
         savePosition()
+        note.place()
     }
 
     private func savePosition() {

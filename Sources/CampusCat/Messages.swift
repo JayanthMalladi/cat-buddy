@@ -54,12 +54,17 @@ final class Messages {
         return start.contains("<!doctype html") || start.contains("<html")
     }
 
-    /// The first field of every CSV row, handling quoted fields with commas, quotes and line breaks.
+    /// The first field of every CSV row.
     static func csvFirstColumn(_ text: String) -> [String] {
-        var rows: [String] = []
+        csvRows(text).map { $0.first ?? "" }
+    }
+
+    /// Every CSV row's fields, handling quoted fields with commas, quotes and line breaks.
+    static func csvRows(_ text: String) -> [[String]] {
+        var rows: [[String]] = []
+        var row: [String] = []
         var field = ""
         var inQuotes = false
-        var column = 0
         var chars = Array(text.replacingOccurrences(of: "\r\n", with: "\n"))
         if chars.first == "\u{FEFF}" { chars.removeFirst() }
         var i = 0
@@ -68,28 +73,33 @@ final class Messages {
             if inQuotes {
                 if c == "\"" {
                     if i + 1 < chars.count && chars[i + 1] == "\"" {
-                        if column == 0 { field.append("\"") }
+                        field.append("\"")
                         i += 1
                     } else {
                         inQuotes = false
                     }
-                } else if column == 0 {
+                } else {
                     field.append(c)
                 }
             } else if c == "\"" {
                 inQuotes = true
             } else if c == "," {
-                column += 1
-            } else if c == "\n" || c == "\r" {
-                rows.append(field)
+                row.append(field)
                 field = ""
-                column = 0
-            } else if column == 0 {
+            } else if c == "\n" || c == "\r" {
+                row.append(field)
+                rows.append(row)
+                row = []
+                field = ""
+            } else {
                 field.append(c)
             }
             i += 1
         }
-        if !field.isEmpty || column > 0 { rows.append(field) }
+        if !field.isEmpty || !row.isEmpty {
+            row.append(field)
+            rows.append(row)
+        }
         return rows
     }
 

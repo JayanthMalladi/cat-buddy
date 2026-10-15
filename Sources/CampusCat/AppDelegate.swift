@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var intervalItems: [NSMenuItem] = []
     private let quietItem = NSMenuItem(title: "Quiet Mode (only speaks when clicked)", action: #selector(AppDelegate.toggleQuiet), keyEquivalent: "")
     private let remindersItem = NSMenuItem(title: "Water & Stretch Reminders", action: #selector(AppDelegate.toggleReminders), keyEquivalent: "")
+    private let noteItem = NSMenuItem(title: "To-Do Note", action: #selector(AppDelegate.toggleNote), keyEquivalent: "")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         cat = CatController()
@@ -44,6 +45,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let menu = NSMenu()
+        noteItem.state = cat.isNoteOpen ? .on : .off
+        noteItem.target = self
+        menu.addItem(noteItem)
+        cat.onNoteOpenChange { [weak self] in
+            guard let self else { return }
+            self.noteItem.state = self.cat.isNoteOpen ? .on : .off
+        }
+        menu.addItem(.separator())
         let sayItem = NSMenuItem(title: "Say Something", action: #selector(saySomething), keyEquivalent: "")
         quietItem.state = cat.isQuiet ? .on : .off
         remindersItem.state = cat.remindersOn ? .on : .off
@@ -126,6 +135,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             case .unavailable(let reason): cat.show(reason)
             }
         }
+    }
+
+    @objc private func toggleNote() {
+        cat.isNoteOpen.toggle()
     }
 
     @objc private func toggleReminders() {
