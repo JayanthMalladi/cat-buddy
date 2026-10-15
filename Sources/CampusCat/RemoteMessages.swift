@@ -1,11 +1,43 @@
 import Foundation
 
-/// Fetches messages.json from the repo's main branch every hour, so messages edited on GitHub
-/// reach the cat without a new build. The last good copy is kept for the next launch, and the
-/// built-in file is used until the first fetch succeeds (or if the Mac is offline).
+/// Fetches the messages every hour, so new ones reach the cat without a new build.
+///
+/// The source is the Google Sheet (or Drive file) whose share link CI bakes into Info.plist as
+/// `CatMessagesURL` (from the MESSAGES_URL repo secret, so the link isn't in the public code).
+/// Without one it falls back to messages.json on the repo's main branch. The last good copy is
+/// kept for the next launch, and the built-in file is used until the first fetch succeeds.
 @MainActor
 final class RemoteMessages: NSObject {
-    nonisolated static let source = URL(string: "https://raw.githubusercontent.com/JayanthMalladi/cat-buddy/main/Resources/messages.json")!
+    nonisolated static let gitHubSource = URL(string: "https://raw.githubusercontent.com/JayanthMalladi/cat-buddy/main/Resources/messages.json")!
+
+    nonisolated static var source: URL {
+        let configured = (Bundle.main.object(forInfoDictionaryKey: "CatMessagesURL") as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard let url = URL(string: configured), url.scheme == "https" else { return gitHubSource }
+        return downloadURL(for: url)
+    }
+
+    /// Turns a Google Sheets or Drive share link into a link that downloads the contents.
+    nonisolated static func downloadURL(for link: URL) -> URL {
+        let parts = link.pathComponents   // e.g. ["/", "spreadsheets", "d", "<id>", "edit"]
+        guard let host = link.host, let d = parts.firstIndex(of: "d"), d + 1 < parts.count else { return link }
+        let id = parts[d + 1]
+        if host == "docs.google.com" && parts.contains("spreadsheets") {
+            var csv = "https://docs.google.com/spreadsheets/d/\(id)/export?format=csv"
+            // Keep the tab if the link points at one.
+            let fromFragment = link.fragment.flatMap { $0.hasPrefix("gid=") ? String($0.dropFirst(4)) : nil }
+            let fromQuery = URLComponents(url: link, resolvingAgainstBaseURL: false)?.queryItems?
+                .first(where: { $0.name == "gid" })?.value
+            if let gid = fromQuery ?? fromFragment, !gid.isEmpty {
+                csv += "&gid=\(gid)"
+            }
+            return URL(string: csv) ?? link
+        }
+        if host == "drive.google.com" && parts.contains("file") {
+            return URL(string: "https://drive.google.com/uc?export=download&id=\(id)") ?? link
+        }
+        return link
+    }
 
     nonisolated static var cacheURL: URL {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
@@ -40,9 +72,9 @@ final class RemoteMessages: NSObject {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard (response as? HTTPURLResponse)?.statusCode == 200 else { return }
-            // A typo on GitHub (broken JSON) must not wipe out her messages.
+            // A broken or empty file (or a sign-in page, if sharing is off) must not wipe out her messages.
             guard messages.load(data) else {
-                NSLog("CampusCat: messages.json on GitHub is broken or empty; keeping the current messages")
+                NSLog("CampusCat: the online messages are broken, empty or not shared; keeping the current messages")
                 return
             }
             let cache = Self.cacheURL
