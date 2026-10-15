@@ -42,7 +42,7 @@ To start it automatically, add it in **System Settings → General → Login Ite
 
 - **Messages:** the app downloads its messages when it starts and then every hour, so new ones reach her within the hour without a new build. A broken or empty list is ignored and she keeps the messages she has; the last good copy is kept for when the Mac is offline. Where they come from:
   - **A Google Sheet (recommended):** put one message per row in column A (a header row saying "Message" is fine). Click **Share → General access → Anyone with the link → Viewer** and copy the link. On her Mac, choose **Set Messages Link…** from the paw menu and paste it. The link is saved only in that Mac's settings, never in the app or this repo, so the public download doesn't reveal it, and it survives updates. A Drive text file (one message per line) works the same way.
-  - **Otherwise:** `Resources/messages.json` on the `main` branch, which anyone can read.
+  - **Otherwise:** `Resources/messages.json` on the `main` branch: a few generic cat lines, since anyone can read this repo. Keep personal messages in the sheet.
 - **The app itself:** every merge to `main` builds a new release. About 30 seconds after launch, and then every hour, the app checks the "latest" release; if it was built from a different commit, it downloads it, swaps itself for the new version and reopens (she disappears for a second or two). This only works when the app is in Applications. The first update after installing may make macOS ask whether Vrinda's Cat can update apps; allow it.
 
 ## Changing messages and timing

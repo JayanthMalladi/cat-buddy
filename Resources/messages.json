@@ -1,33 +1,21 @@
 {
-  "affection": [
-    "I love you. Just thought you should know.",
-    "You're my favorite human in the whole world.",
-    "I hope you know how much you mean to me."
+  "cozy": [
+    "Hi. I was napping, but I'm glad you're here.",
+    "This is a very good spot. Thank you for keeping me.",
+    "If you need me, I'll be right here. Probably asleep.",
+    "Take a deep breath. I'll wait."
   ],
-  "compliments": [
-    "You look really pretty right now.",
+  "encouragement": [
     "You're doing great. I can tell.",
-    "Your laugh is my favorite sound."
+    "One thing at a time. You've got this.",
+    "Proud of you for showing up today.",
+    "It's okay to take a break. Even I need twelve a day."
   ],
-  "boyfriendNudges": [
-    "Psst. Text your boyfriend. He's probably thinking about you.",
-    "Someone out there misses you. (It's your boyfriend.)"
-  ],
-  "longDistance": [
-    "He's far away, but I'm right here keeping you company for him.",
-    "He asked me to keep an eye on you. I take this job very seriously.",
-    "Same moon, same sky. He's under it too.",
-    "Send him a selfie. He'd love that more than I love naps.",
-    "Tell him about your day. Even the boring parts. Especially those.",
-    "The distance is hard. You're doing so well with it.",
-    "One day closer to the next hug.",
-    "He thinks you're the best thing that ever happened to him. I agree.",
-    "If he were here right now, he'd be hugging you. So consider this a cat hug."
-  ],
-  "fromHim": [
-    "He wants you to be all sunshine and rainbows, all the time.",
-    "He can't wait to spend time with you in December.",
-    "ash buoy.",
-    "I love you so fucking much."
+  "catThoughts": [
+    "I have decided this desktop is mine now.",
+    "Sometimes I think about tuna. Just so you know.",
+    "Nap count today: classified.",
+    "If you leave the window open, I can't be held responsible.",
+    "I knocked nothing off your desk today. You're welcome."
   ]
 }
