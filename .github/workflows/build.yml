@@ -40,9 +40,13 @@ jobs:
           kill -0 "$PID" || { echo "CampusCat crashed during the UI check"; exit 1; }
           kill "$PID"
 
-      - name: Check the app updates itself from the latest release
+      - name: Check the app updates itself
         run: |
-          # Pretend to be an old build, then let it find the published release and replace itself.
+          # Serve this build as a "release" from a local folder, make a copy of the app pretend to
+          # be an old build, and check it replaces itself with the new one and reopens.
+          FEED="$RUNNER_TEMP/feed"
+          mkdir -p "$FEED"
+          cp build/VrindasCat.zip build/version.txt "$FEED/"
           DIR="$RUNNER_TEMP/update-test"
           APP="$DIR/Vrinda's Cat.app"
           mkdir -p "$DIR"
@@ -51,19 +55,23 @@ jobs:
           codesign --force --deep --sign - "$APP"
           BEFORE=$(shasum "$APP/Contents/Info.plist" | cut -d' ' -f1)
           defaults write com.campuscat.buddy autoUpdate -bool true
-          "$APP/Contents/MacOS/CampusCat" &
+          defaults write com.campuscat.buddy updateFeed "file://$FEED/"
+          "$APP/Contents/MacOS/CampusCat" > "$RUNNER_TEMP/update-app.log" 2>&1 &
           OLD_PID=$!
-          for i in $(seq 1 60); do
+          for i in $(seq 1 40); do
             sleep 3
             AFTER=$(shasum "$APP/Contents/Info.plist" | cut -d' ' -f1)
             NEW_PID=$(pgrep -f "$APP/Contents/MacOS/CampusCat" | grep -v "^$OLD_PID$" | head -1 || true)
             if [ "$AFTER" != "$BEFORE" ] && [ -n "$NEW_PID" ]; then
               echo "Updated after about $((i * 3)) seconds and reopened as pid $NEW_PID"
+              /usr/libexec/PlistBuddy -c "Print :CatBuildCommit" "$APP/Contents/Info.plist"
               kill "$NEW_PID" || true
+              defaults delete com.campuscat.buddy updateFeed
               exit 0
             fi
           done
-          echo "The app did not replace itself with the latest release"
+          echo "The app did not replace itself with the new build. Its log:"
+          cat "$RUNNER_TEMP/update-app.log"
           kill "$OLD_PID" 2>/dev/null || true
           exit 1
 
@@ -87,7 +95,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest build/VrindasCat.zip \
+          gh release create latest build/VrindasCat.zip build/version.txt \
             --title "Vrinda's Cat (latest build)" \
             --notes "Built from ${GITHUB_SHA::7}. Download VrindasCat.zip below. See the README for the first-launch steps." \
             --target "$GITHUB_SHA"

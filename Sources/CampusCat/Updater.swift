@@ -2,22 +2,22 @@ import AppKit
 
 /// Keeps the app up to date from the repo's "latest" GitHub release.
 ///
-/// Every hour (and shortly after launch) it compares the commit the release was built from with
-/// the one baked into this app's Info.plist (`CatBuildCommit`, set by CI). When they differ it
-/// downloads VrindasCat.zip, checks the new app, swaps it in place of this one and relaunches.
-/// Builds without a commit (local builds) never update themselves.
+/// Every hour (and shortly after launch) it reads version.txt from the release (the commit the
+/// release was built from) and compares it with the one baked into this app's Info.plist
+/// (`CatBuildCommit`, set by CI). When they differ it downloads VrindasCat.zip, checks the new
+/// app, swaps it in place of this one and relaunches. Builds without a commit (local builds)
+/// never update themselves. Both files come from plain release download links rather than the
+/// GitHub API, which has a low hourly limit for apps without a login.
 @MainActor
 final class Updater: NSObject {
-    private static let releaseAPI = URL(string: "https://api.github.com/repos/JayanthMalladi/cat-buddy/releases/tags/latest")!
+    private static let defaultFeed = "https://github.com/JayanthMalladi/cat-buddy/releases/download/latest/"
     private static let assetName = "VrindasCat.zip"
 
-    private struct Release: Decodable {
-        struct Asset: Decodable {
-            let name: String
-            let browser_download_url: URL
-        }
-        let target_commitish: String
-        let assets: [Asset]
+    /// Where version.txt and the zip live. The hidden `updateFeed` default lets CI point the app
+    /// at a local copy of a release.
+    private var feed: URL {
+        let custom = UserDefaults.standard.string(forKey: "updateFeed") ?? ""
+        return URL(string: custom.isEmpty ? Self.defaultFeed : custom) ?? URL(string: Self.defaultFeed)!
     }
 
     enum Outcome {
@@ -65,20 +65,21 @@ final class Updater: NSObject {
         defer { busy = false }
 
         do {
-            var request = URLRequest(url: Self.releaseAPI)
-            request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+            var request = URLRequest(url: feed.appendingPathComponent("version.txt"))
             request.cachePolicy = .reloadIgnoringLocalCacheData
             request.timeoutInterval = 30
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-                return .unavailable("GitHub didn't answer.")
+            guard Self.isOK(response) else {
+                return .unavailable("Couldn't reach GitHub to check for updates.")
             }
-            let release = try JSONDecoder().decode(Release.self, from: data)
-            guard release.target_commitish != currentCommit else { return .upToDate }
-            guard let asset = release.assets.first(where: { $0.name == Self.assetName }) else {
-                return .unavailable("The latest release has no app in it yet.")
+            let latest = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+            // version.txt holds one commit hash; anything else (an error page) is ignored.
+            guard !latest.isEmpty, latest.count <= 64, latest.allSatisfy({ $0.isHexDigit }) else {
+                return .unavailable("Couldn't read the latest version.")
             }
-            try await install(from: asset.browser_download_url, replacing: appURL)
+            guard latest != currentCommit else { return .upToDate }
+            NSLog("CampusCat: updating from \(currentCommit) to \(latest)")
+            try await install(from: feed.appendingPathComponent(Self.assetName), replacing: appURL)
             return .updating
         } catch {
             NSLog("CampusCat: update failed: \(error)")
@@ -94,7 +95,7 @@ final class Updater: NSObject {
         defer { try? fm.removeItem(at: work) }
 
         let (downloaded, response) = try await URLSession.shared.download(from: zipURL)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw UpdateError("download failed") }
+        guard Self.isOK(response) else { throw UpdateError("download failed") }
         let zip = work.appendingPathComponent(Self.assetName)
         try fm.moveItem(at: downloaded, to: zip)
 
@@ -113,6 +114,12 @@ final class Updater: NSObject {
         _ = try fm.replaceItemAt(appURL, withItemAt: newApp)
         NSLog("CampusCat: installed update, relaunching")
         relaunch(appURL)
+    }
+
+    /// A 200 from the web, or any answer for a local file (used by CI).
+    private static func isOK(_ response: URLResponse) -> Bool {
+        guard let http = response as? HTTPURLResponse else { return response.url?.isFileURL == true }
+        return http.statusCode == 200
     }
 
     /// Opens the (new) app once this process has quit.
