@@ -293,6 +293,11 @@ final class CatController: NSObject {
     }
 
     /// Shows a line that isn't one of the preset messages (e.g. about updates).
+    /// Points the messages at a new share link (see RemoteMessages).
+    func setMessagesLink(_ text: String) -> Bool {
+        remoteMessages?.setLink(text) ?? false
+    }
+
     func show(_ text: String) {
         bubble.show(text, above: panel)
     }

@@ -14,7 +14,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         cat = CatController()
         cat.start()
         setUpMenuBar()
+        setUpEditShortcuts()
         updater.start()
+    }
+
+    /// The app has no menu bar of its own, so without this ⌘V wouldn't paste into the link box.
+    private func setUpEditShortcuts() {
+        let edit = NSMenu(title: "Edit")
+        edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        let editItem = NSMenuItem(title: "Edit", action: nil, keyEquivalent: "")
+        editItem.submenu = edit
+        let main = NSMenu()
+        main.addItem(editItem)
+        NSApp.mainMenu = main
     }
 
     private func setUpMenuBar() {
@@ -65,6 +80,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(intervalItem)
         updateIntervalChecks()
         menu.addItem(.separator())
+        let linkItem = NSMenuItem(title: "Set Messages Link…", action: #selector(setMessagesLink), keyEquivalent: "")
+        linkItem.target = self
+        menu.addItem(linkItem)
         let updateItem = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "")
         updateItem.target = self
         menu.addItem(updateItem)
@@ -77,6 +95,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func saySomething() {
         cat.say()
+    }
+
+    /// Asks for the Google Sheet link Jayanth sends; it's kept only in this Mac's settings.
+    @objc private func setMessagesLink() {
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "Messages Link"
+        alert.informativeText = "Paste the link to the messages sheet. Leave it empty to use the built-in messages."
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+        field.stringValue = RemoteMessages.link
+        field.placeholderString = "https://docs.google.com/spreadsheets/d/…"
+        alert.accessoryView = field
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        if cat.setMessagesLink(field.stringValue) {
+            cat.show(field.stringValue.isEmpty ? "Okay, back to my usual messages." : "Got it! New messages coming up.")
+        } else {
+            cat.show("That doesn't look like a link. It should start with https://")
+        }
     }
 
     @objc private func checkForUpdates() {
