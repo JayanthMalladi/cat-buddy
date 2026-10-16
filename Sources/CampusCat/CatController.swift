@@ -22,6 +22,10 @@ final class CatController: NSObject {
     private let remoteControl = RemoteControl()
     /// A nudge from the sheet waiting for her to finish a walk.
     private var pendingNudge: String?
+    /// While a nudge is up she does her happy dance again at this time, until it's clicked.
+    private var nextNudgeDance = Date.distantFuture
+    /// A check-in line that came due while a nudge was up; it's said once the nudge is clicked.
+    private var checkInAfterNudge: String?
     /// Timed messages and reminders hold off until then, so they don't cover a check-in or nudge.
     private var holdChatterUntil = Date.distantPast
     private let bubble = SpeechBubble()
@@ -150,6 +154,7 @@ final class CatController: NSObject {
         note.onToggle = { [weak self] item, done in self?.taskToggled(item, done: done) }
         note.onAdd = { [weak self] _ in self?.taskAdded() }
         remoteControl.onNudge = { [weak self] text in self?.pendingNudge = text }
+        bubble.onPinnedClick = { [weak self] in self?.dismissNudge() }
     }
 
     func start() {
@@ -230,6 +235,10 @@ final class CatController: NSObject {
 
     /// A click shows a message (even in Quiet Mode, since she was asked), subject to the cooldown.
     private func clicked() {
+        if bubble.isPinned {
+            dismissNudge()
+            return
+        }
         guard state != .walking else { return }   // walks are silent
         sayInteractive(force: true)
     }
@@ -241,20 +250,29 @@ final class CatController: NSObject {
             advance()
         }
 
-        if state == .curledSleeping && now >= nextWalkAt {
+        // She stays put while a nudge is up, so it isn't carried off across the screen.
+        if state == .curledSleeping && now >= nextWalkAt && !bubble.isPinned {
             startWalking()
         }
         // Nothing else starts while she walks; it waits until she's asleep on the other side.
         guard state != .walking else { return }
 
         todos.rollOverIfNewDay()
-        if let nudge = pendingNudge, now >= holdChatterUntil {
+        if let nudge = pendingNudge, bubble.isPinned || now >= holdChatterUntil {
             pendingNudge = nil
             deliverNudge(nudge)
             return
         }
-        if now >= holdChatterUntil, let isLast = CheckIns.due(at: now) {
+        if bubble.isPinned || now >= holdChatterUntil, let isLast = CheckIns.due(at: now) {
             checkIn(isLast: isLast)
+        }
+        if bubble.isPinned {
+            // Nothing else talks over his nudge; she just keeps waving it at her.
+            if now >= nextNudgeDance {
+                _ = act([.happy])
+                nextNudgeDance = now.addingTimeInterval(60)
+            }
+            return
         }
         guard now >= holdChatterUntil else { return }
 
@@ -359,17 +377,35 @@ final class CatController: NSObject {
         }
         if !note.isOpen { note.setOpen(true) }
         guard !isQuiet else { return }
+        if bubble.isPinned {
+            checkInAfterNudge = text   // his nudge stays up; she asks once it's been read
+            return
+        }
         _ = act([.curious])
         bubble.show(text, above: panel)
         holdChatterUntil = Date().addingTimeInterval(20)
     }
 
-    /// A nudge typed into the sheet's Control tab. She says it even in Quiet Mode, since it's from him.
+    /// A nudge typed into the sheet's Control tab. She says it even in Quiet Mode, since it's from
+    /// him, in a pink signed bubble that stays up until she clicks it or the cat, and does her happy
+    /// dance every minute until then. It doesn't touch the to-do note.
     private func deliverNudge(_ text: String) {
         _ = act([.happy])
-        bubble.show(text, above: panel)
-        if !todos.open.isEmpty && !note.isOpen { note.setOpen(true) }
+        bubble.showPinned(text, signedBy: "from Jayanth 💌", above: panel)
+        nextNudgeDance = Date().addingTimeInterval(60)
+    }
+
+    /// She clicked the nudge (or the cat while it was up): take it down, then say any check-in
+    /// that came due meanwhile.
+    private func dismissNudge() {
+        bubble.unpin()
+        nextNudgeDance = .distantFuture
         holdChatterUntil = Date().addingTimeInterval(20)
+        if let text = checkInAfterNudge {
+            checkInAfterNudge = nil
+            _ = act([.curious])
+            bubble.show(text, above: panel)
+        }
     }
 
     private func stopWalking() {
