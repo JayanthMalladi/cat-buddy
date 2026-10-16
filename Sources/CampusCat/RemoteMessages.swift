@@ -1,6 +1,6 @@
 import Foundation
 
-/// Fetches the messages every hour, so new ones reach the cat without a new build.
+/// Fetches the messages (CatController asks every minute), so new ones reach the cat without a new build.
 ///
 /// The source is a Google Sheet (or Drive file) share link pasted in from the menu ("Set Messages
 /// Link…"). It's saved only in this Mac's settings, never in the app or the repo, so the public
@@ -64,22 +64,13 @@ final class RemoteMessages: NSObject {
     }
 
     private let messages: Messages
-    private var timer: Timer?
 
     init(messages: Messages) {
         self.messages = messages
         super.init()
     }
 
-    func start() {
-        refresh()
-        let timer = Timer(timeInterval: 60 * 60, target: self, selector: #selector(refresh),
-                          userInfo: nil, repeats: true)
-        RunLoop.main.add(timer, forMode: .common)
-        self.timer = timer
-    }
-
-    @objc func refresh() {
+    func refresh() {
         Task { await fetch() }
     }
 
