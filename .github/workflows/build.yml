@@ -44,7 +44,8 @@ jobs:
       - name: Check the to-do note, a nudge and a check-in
         run: |
           # Give her a list, a nudge from the "sheet" (a local file) and a check-in a minute from
-          # now, then screenshot the note, the nudge and the check-in.
+          # now, then screenshot the note, the nudge and the check-in (the nudge stays pinned, so it
+          # should still be up in the second screenshot).
           SUPPORT="$HOME/Library/Application Support/Vrinda's Cat"
           mkdir -p "$SUPPORT"
           cat > "$SUPPORT/todos.json" <<EOF

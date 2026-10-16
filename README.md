@@ -60,7 +60,7 @@ The messages sheet can have a tab named **Control** with a name in column A and 
 | Nudge | Go finish that lab report, I believe in you! |
 | Check-in times | 11:00, 15:00, 19:00 |
 
-- **Nudge:** type a new line and the cat says it within a minute (she re-reads the sheet every minute), even in Quiet Mode, and brings the note back up if tasks are left. She says each nudge once; to send the same words again, change them slightly.
+- **Nudge:** a message from Jayanth, for when he wants her to notice something right now. Type a new line and within a minute (she re-reads the sheet every minute) the cat does her happy dance and shows it in a pink bubble signed "from Jayanth 💌", even in Quiet Mode. The bubble stays up until she clicks it or the cat, and the cat dances again every minute until then. Meanwhile she doesn't walk off, and her own messages and reminders wait; a check-in that comes due still brings the note up, and its question follows once the nudge is clicked. Nudges don't open the to-do note. She says each nudge once; to send the same words again, change them slightly.
 - **Check-in times:** comma-separated times in her time zone, like `10am, 2pm, 8pm` or `9:30, 13:00, 21:00`. Clear the cell to go back to 11:00, 15:00 and 19:00.
 
 It uses the same share link as the messages, so there is nothing more to set up on her Mac.
