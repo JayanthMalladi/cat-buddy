@@ -1,6 +1,6 @@
 import Foundation
 
-/// Reads the "Control" tab of the messages sheet every couple of minutes, so Jayanth can nudge her
+/// Reads the "Control" tab of the messages sheet (CatController asks every minute), so Jayanth can nudge her
 /// from anywhere and change when the cat checks on her list.
 ///
 /// The tab has a name in column A and a value in column B:
@@ -18,9 +18,6 @@ final class RemoteControl: NSObject {
 
     /// Called with a new nudge from the sheet.
     var onNudge: ((String) -> Void)?
-
-    private var timer: Timer?
-    private let interval: TimeInterval = 2 * 60
 
     /// Where the tab is read from: the hidden `controlFeed` default (used by CI), or the Control
     /// tab of the pasted messages sheet. Nil when no sheet link is set.
@@ -40,15 +37,7 @@ final class RemoteControl: NSObject {
         return components?.url
     }
 
-    func start() {
-        refresh()
-        let timer = Timer(timeInterval: interval, target: self, selector: #selector(refresh),
-                          userInfo: nil, repeats: true)
-        RunLoop.main.add(timer, forMode: .common)
-        self.timer = timer
-    }
-
-    @objc func refresh() {
+    func refresh() {
         guard let url = Self.source else { return }
         Task { await fetch(url) }
     }

@@ -49,6 +49,7 @@ final class CatController: NSObject {
     private var tickTimer: Timer?
     private var hoverTimer: Timer?
     private var walkTimer: Timer?
+    private var sheetTimer: Timer?
 
     // Timing knobs, in seconds.
     /// Minimum gap between messages from hovering or clicking.
@@ -156,10 +157,13 @@ final class CatController: NSObject {
         panel.orderFrontRegardless()
         scheduleNextMessage()
         reminders.restart()
-        let remote = RemoteMessages(messages: messages)
-        remote.start()
-        remoteMessages = remote
-        remoteControl.start()
+        remoteMessages = RemoteMessages(messages: messages)
+        refreshSheet()
+        // Re-read the whole sheet (messages and the Control tab) every minute.
+        let sheet = Timer(timeInterval: 60, target: self, selector: #selector(refreshSheet),
+                          userInfo: nil, repeats: true)
+        RunLoop.main.add(sheet, forMode: .common)
+        sheetTimer = sheet
         note.attach(to: panel)
         nextWalkAt = Date().addingTimeInterval(walkInterval)
         enter(.curledSleeping)
@@ -388,7 +392,14 @@ final class CatController: NSObject {
     /// Shows a line that isn't one of the preset messages (e.g. about updates).
     /// Points the messages at a new share link (see RemoteMessages).
     func setMessagesLink(_ text: String) -> Bool {
-        remoteMessages?.setLink(text) ?? false
+        guard remoteMessages?.setLink(text) == true else { return false }
+        remoteControl.refresh()
+        return true
+    }
+
+    @objc private func refreshSheet() {
+        remoteMessages?.refresh()
+        remoteControl.refresh()
     }
 
     func show(_ text: String) {

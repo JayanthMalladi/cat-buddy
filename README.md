@@ -60,14 +60,14 @@ The messages sheet can have a tab named **Control** with a name in column A and 
 | Nudge | Go finish that lab report, I believe in you! |
 | Check-in times | 11:00, 15:00, 19:00 |
 
-- **Nudge:** type a new line and the cat says it within a few minutes (she checks every 2 minutes), even in Quiet Mode, and brings the note back up if tasks are left. She says each nudge once; to send the same words again, change them slightly.
+- **Nudge:** type a new line and the cat says it within a minute (she re-reads the sheet every minute), even in Quiet Mode, and brings the note back up if tasks are left. She says each nudge once; to send the same words again, change them slightly.
 - **Check-in times:** comma-separated times in her time zone, like `10am, 2pm, 8pm` or `9:30, 13:00, 21:00`. Clear the cell to go back to 11:00, 15:00 and 19:00.
 
 It uses the same share link as the messages, so there is nothing more to set up on her Mac.
 
 ## Updates and new messages
 
-- **Messages:** the app downloads its messages when it starts and then every hour, so new ones reach her within the hour without a new build. A broken or empty list is ignored and she keeps the messages she has; the last good copy is kept for when the Mac is offline. Where they come from:
+- **Messages:** the app downloads its messages when it starts and then every minute, so new ones reach her within a minute without a new build. A broken or empty list is ignored and she keeps the messages she has; the last good copy is kept for when the Mac is offline. Where they come from:
   - **A Google Sheet (recommended):** put one message per row in column A (a header row saying "Message" is fine). Click **Share → General access → Anyone with the link → Viewer** and copy the link. On her Mac, choose **Set Messages Link…** from the paw menu and paste it. The link is saved only in that Mac's settings, never in the app or this repo, so the public download doesn't reveal it, and it survives updates. A Drive text file (one message per line) works the same way.
   - **Otherwise:** `Resources/messages.json` on the `main` branch: a few generic cat lines, since anyone can read this repo. Keep personal messages in the sheet.
 - **The app itself:** every merge to `main` builds a new release. About 30 seconds after launch, and then every hour, the app checks the "latest" release; if it was built from a different commit, it downloads it, swaps itself for the new version and reopens (she disappears for a second or two). This only works when the app is in Applications. The first update after installing may make macOS ask whether Vrinda's Cat can update apps; allow it.
