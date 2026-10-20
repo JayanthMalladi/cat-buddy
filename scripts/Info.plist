@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Vrinda's Cat</string>
+    <string>Narasimha</string>
     <key>CFBundleDisplayName</key>
-    <string>Vrinda's Cat</string>
+    <string>Narasimha</string>
     <key>CFBundleIdentifier</key>
     <string>com.campuscat.buddy</string>
     <key>CFBundleExecutable</key>

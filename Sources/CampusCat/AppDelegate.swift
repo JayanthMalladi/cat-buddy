@@ -36,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setUpMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            if let paw = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "Vrinda's Cat") {
+            if let paw = NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "Narasimha") {
                 paw.isTemplate = true
                 button.image = paw
             } else {
@@ -95,10 +95,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let updateItem = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "")
         updateItem.target = self
         menu.addItem(updateItem)
-        let versionItem = NSMenuItem(title: "Vrinda's Cat, \(updater.versionLabel)", action: nil, keyEquivalent: "")
+        let versionItem = NSMenuItem(title: "Narasimha, \(updater.versionLabel)", action: nil, keyEquivalent: "")
         versionItem.isEnabled = false
         menu.addItem(versionItem)
-        menu.addItem(NSMenuItem(title: "Quit Vrinda's Cat", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Quit Narasimha", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
 
