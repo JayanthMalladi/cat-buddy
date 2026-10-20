@@ -28,7 +28,7 @@ jobs:
           defaults write com.campuscat.buddy todoNoteOpen -bool false
           defaults write com.campuscat.buddy checkInTimes "$(date -v+12H +%H:%M)"
           # Launch the real binary; fail if it crashes on startup.
-          "build/Vrinda's Cat.app/Contents/MacOS/CampusCat" &
+          "build/Narasimha.app/Contents/MacOS/CampusCat" &
           PID=$!
           sleep 5
           if ! kill -0 "$PID" 2>/dev/null; then
@@ -61,7 +61,7 @@ jobs:
           defaults write com.campuscat.buddy walkEverySeconds -float 3600
           defaults delete com.campuscat.buddy lastNudge 2>/dev/null || true
           defaults delete com.campuscat.buddy lastCheckIn 2>/dev/null || true
-          "build/Vrinda's Cat.app/Contents/MacOS/CampusCat" > "$RUNNER_TEMP/todo-app.log" 2>&1 &
+          "build/Narasimha.app/Contents/MacOS/CampusCat" > "$RUNNER_TEMP/todo-app.log" 2>&1 &
           PID=$!
           sleep 4
           screencapture -x build/screenshots/30-note-and-nudge.png
@@ -89,9 +89,9 @@ jobs:
           mkdir -p "$FEED"
           cp build/VrindasCat.zip build/version.txt "$FEED/"
           DIR="$RUNNER_TEMP/update-test"
-          APP="$DIR/Vrinda's Cat.app"
+          APP="$DIR/Narasimha.app"
           mkdir -p "$DIR"
-          cp -R "build/Vrinda's Cat.app" "$DIR/"
+          cp -R "build/Narasimha.app" "$DIR/"
           /usr/libexec/PlistBuddy -c "Set :CatBuildCommit pretend-old-build" "$APP/Contents/Info.plist"
           codesign --force --deep --sign - "$APP"
           BEFORE=$(shasum "$APP/Contents/Info.plist" | cut -d' ' -f1)
@@ -137,6 +137,6 @@ jobs:
         run: |
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest build/VrindasCat.zip build/version.txt \
-            --title "Vrinda's Cat (latest build)" \
+            --title "Narasimha (latest build)" \
             --notes "Built from ${GITHUB_SHA::7}. Download VrindasCat.zip below. See the README for the first-launch steps." \
             --target "$GITHUB_SHA"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds "Vrinda's Cat.app" (universal, ad-hoc signed) and zips it into build/VrindasCat.zip.
+# Builds "Narasimha.app" (universal, ad-hoc signed) and zips it into build/VrindasCat.zip.
 # Runs on macOS with Xcode or the Swift toolchain installed. No Apple developer account needed.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 swift build -c release --arch arm64 --arch x86_64
 BIN="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)/CampusCat"
 
-APP="build/Vrinda's Cat.app"
+APP="build/Narasimha.app"
 rm -rf build
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/CampusCat"

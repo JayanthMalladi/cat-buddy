@@ -1,15 +1,15 @@
-# Vrinda's Cat
+# Narasimha
 
 A tiny cat that lives on your Mac desktop. She sleeps quietly in the corner, wakes up and does something cute when you rest the pointer on her, and every so often says something kind in a speech bubble. No accounts and no AI at runtime. The only things she fetches from the internet are her messages and app updates.
 
 ## Download and open it
 
 1. Go to the repository's **Releases** page and download **VrindasCat.zip** from the "latest" release (or, from any run on the **Actions** tab, download the **VrindasCat** artifact, which is a zip containing VrindasCat.zip).
-2. Double-click the zip to unpack it and drag **Vrinda's Cat.app** into **Applications**.
+2. Double-click the zip to unpack it and drag **Narasimha.app** into **Applications**.
 3. The first time only, macOS will block it because it isn't from the App Store or a paid developer account:
-   - **macOS 14 (Sonoma) or older:** right-click (or Control-click) Vrinda's Cat.app, choose **Open**, then click **Open** in the dialog.
-   - **macOS 15 (Sequoia) or newer:** double-click it, click **Done** on the warning, then open **System Settings → Privacy & Security**, scroll down to the message about Vrinda's Cat, click **Open Anyway**, and confirm with your password.
-   - Alternative for either: open Terminal and run `xattr -dr com.apple.quarantine "/Applications/Vrinda's Cat.app"`, then open it normally.
+   - **macOS 14 (Sonoma) or older:** right-click (or Control-click) Narasimha.app, choose **Open**, then click **Open** in the dialog.
+   - **macOS 15 (Sequoia) or newer:** double-click it, click **Done** on the warning, then open **System Settings → Privacy & Security**, scroll down to the message about Narasimha, click **Open Anyway**, and confirm with your password.
+   - Alternative for either: open Terminal and run `xattr -dr com.apple.quarantine "/Applications/Narasimha.app"`, then open it normally.
 
 After that it opens like any other app. It has no Dock icon; look for the paw print in the menu bar.
 
@@ -35,7 +35,7 @@ You only do this once: from then on the app **updates itself** (see below).
   - *Bring Cat Back* moves her to the bottom-right corner if she ever gets lost off screen.
   - *Set Messages Link…* points her at your messages sheet (see below).
   - *Check for Updates* looks for a new build right away; the line under it shows which build is running.
-  - *Quit Vrinda's Cat*.
+  - *Quit Narasimha*.
 
 To start it automatically, add it in **System Settings → General → Login Items**.
 
@@ -70,17 +70,17 @@ It uses the same share link as the messages, so there is nothing more to set up 
 - **Messages:** the app downloads its messages when it starts and then every minute, so new ones reach her within a minute without a new build. A broken or empty list is ignored and she keeps the messages she has; the last good copy is kept for when the Mac is offline. Where they come from:
   - **A Google Sheet (recommended):** put one message per row in column A (a header row saying "Message" is fine). Click **Share → General access → Anyone with the link → Viewer** and copy the link. On her Mac, choose **Set Messages Link…** from the paw menu and paste it. The link is saved only in that Mac's settings, never in the app or this repo, so the public download doesn't reveal it, and it survives updates. A Drive text file (one message per line) works the same way.
   - **Otherwise:** `Resources/messages.json` on the `main` branch: a few generic cat lines, since anyone can read this repo. Keep personal messages in the sheet.
-- **The app itself:** every merge to `main` builds a new release. About 30 seconds after launch, and then every hour, the app checks the "latest" release; if it was built from a different commit, it downloads it, swaps itself for the new version and reopens (she disappears for a second or two). This only works when the app is in Applications. The first update after installing may make macOS ask whether Vrinda's Cat can update apps; allow it.
+- **The app itself:** every merge to `main` builds a new release. About 30 seconds after launch, and then every hour, the app checks the "latest" release; if it was built from a different commit, it downloads it, swaps itself for the new version and reopens (she disappears for a second or two). This only works when the app is in Applications. The first update after installing may make macOS ask whether Narasimha can update apps; allow it.
 
 ## Changing messages and timing
 
-All three files are plain JSON inside the app (right-click Vrinda's Cat.app → *Show Package Contents* → `Contents/Resources`), and in this repo under `Resources/`.
+All three files are plain JSON inside the app (right-click Narasimha.app → *Show Package Contents* → `Contents/Resources`), and in this repo under `Resources/`.
 
 - `messages.json`: lists of messages grouped by category. Add or remove lines freely. The cat never repeats the last few, and talks on the interval chosen in the menu.
 - `reminders.json`: each reminder's text, how often it comes (`everyMinutes`), and optionally an `animation` to play with it.
 - `animations.json`: one entry per state with `fps`, `loop`, the frame range (`start`, `end`), `offsetY` (points, to nudge a pose up or down).
 
-Editing files inside the app breaks its signature; after editing, run `codesign --force --deep --sign - "/Applications/Vrinda's Cat.app"` in Terminal (or rebuild).
+Editing files inside the app breaks its signature; after editing, run `codesign --force --deep --sign - "/Applications/Narasimha.app"` in Terminal (or rebuild).
 
 ## Building
 
@@ -89,7 +89,7 @@ The app is a Swift package with no dependencies. GitHub Actions builds it on a m
 On a Mac with Xcode installed:
 
 ```sh
-./scripts/build_app.sh      # makes "build/Vrinda's Cat.app" and build/VrindasCat.zip
+./scripts/build_app.sh      # makes "build/Narasimha.app" and build/VrindasCat.zip
 swift run                   # or run straight from the source tree
 ```
 
