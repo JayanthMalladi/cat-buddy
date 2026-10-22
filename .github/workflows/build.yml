@@ -46,7 +46,7 @@ jobs:
           # Give her a list, a nudge from the "sheet" (a local file) and a check-in a minute from
           # now, then screenshot the note, the nudge and the check-in (the nudge stays pinned, so it
           # should still be up in the second screenshot).
-          SUPPORT="$HOME/Library/Application Support/Vrinda's Cat"
+          SUPPORT="$HOME/Library/Application Support/Desktop Cat"
           mkdir -p "$SUPPORT"
           cat > "$SUPPORT/todos.json" <<EOF
           {"day":"$(date +%Y-%m-%d)","items":[
@@ -87,7 +87,7 @@ jobs:
           # be an old build, and check it replaces itself with the new one and reopens.
           FEED="$RUNNER_TEMP/feed"
           mkdir -p "$FEED"
-          cp build/VrindasCat.zip build/version.txt "$FEED/"
+          cp build/DesktopCat.zip build/version.txt "$FEED/"
           DIR="$RUNNER_TEMP/update-test"
           APP="$DIR/Narasimha.app"
           mkdir -p "$DIR"
@@ -127,8 +127,8 @@ jobs:
       - name: Upload zip
         uses: actions/upload-artifact@v4
         with:
-          name: VrindasCat
-          path: build/VrindasCat.zip
+          name: DesktopCat
+          path: build/DesktopCat.zip
 
       - name: Publish "latest" release
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -136,7 +136,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest build/VrindasCat.zip build/version.txt \
+          # Installs from before the rename still download the zip under its old name; that copy
+          # can go once her Mac shows a renamed build in the paw menu.
+          cp build/DesktopCat.zip build/VrindasCat.zip
+          gh release create latest build/DesktopCat.zip build/VrindasCat.zip build/version.txt \
             --title "Narasimha (latest build)" \
-            --notes "Built from ${GITHUB_SHA::7}. Download VrindasCat.zip below. See the README for the first-launch steps." \
+            --notes "Built from ${GITHUB_SHA::7}. Download DesktopCat.zip below. See the README for the first-launch steps." \
             --target "$GITHUB_SHA"

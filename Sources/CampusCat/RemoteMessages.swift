@@ -58,9 +58,7 @@ final class RemoteMessages: NSObject {
     }
 
     nonisolated static var cacheURL: URL {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? FileManager.default.temporaryDirectory
-        return support.appendingPathComponent("Vrinda's Cat/messages.json")
+        Resources.dataFolder.appendingPathComponent("messages.json")
     }
 
     private let messages: Messages

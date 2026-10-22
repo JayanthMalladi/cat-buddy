@@ -21,9 +21,7 @@ final class TodoList {
     }
 
     nonisolated static var fileURL: URL {
-        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? FileManager.default.temporaryDirectory
-        return support.appendingPathComponent("Vrinda's Cat/todos.json")
+        Resources.dataFolder.appendingPathComponent("todos.json")
     }
 
     private(set) var items: [TodoItem] = []
