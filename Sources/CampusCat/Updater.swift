@@ -4,14 +4,14 @@ import AppKit
 ///
 /// Every hour (and shortly after launch) it reads version.txt from the release (the commit the
 /// release was built from) and compares it with the one baked into this app's Info.plist
-/// (`CatBuildCommit`, set by CI). When they differ it downloads VrindasCat.zip, checks the new
+/// (`CatBuildCommit`, set by CI). When they differ it downloads DesktopCat.zip, checks the new
 /// app, swaps it in place of this one and relaunches. Builds without a commit (local builds)
 /// never update themselves. Both files come from plain release download links rather than the
 /// GitHub API, which has a low hourly limit for apps without a login.
 @MainActor
 final class Updater: NSObject {
     private static let defaultFeed = "https://github.com/JayanthMalladi/cat-buddy/releases/download/latest/"
-    private static let assetName = "VrindasCat.zip"
+    private static let assetName = "DesktopCat.zip"
 
     /// Where version.txt and the zip live. The hidden `updateFeed` default lets CI point the app
     /// at a local copy of a release.

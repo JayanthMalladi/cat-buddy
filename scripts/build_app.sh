@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds "Narasimha.app" (universal, ad-hoc signed) and zips it into build/VrindasCat.zip.
+# Builds "Narasimha.app" (universal, ad-hoc signed) and zips it into build/DesktopCat.zip.
 # Runs on macOS with Xcode or the Swift toolchain installed. No Apple developer account needed.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -33,7 +33,7 @@ iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 codesign --force --deep --sign - "$APP"
 codesign --verify --verbose "$APP"
 
-ditto -c -k --keepParent "$APP" build/VrindasCat.zip
+ditto -c -k --keepParent "$APP" build/DesktopCat.zip
 # Published next to the zip; installed apps compare it with their own commit to find updates.
 echo "${GITHUB_SHA:-}" > build/version.txt
-echo "Built $(du -h build/VrindasCat.zip | cut -f1) build/VrindasCat.zip"
+echo "Built $(du -h build/DesktopCat.zip | cut -f1) build/DesktopCat.zip"

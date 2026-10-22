@@ -4,7 +4,7 @@ A tiny cat that lives on your Mac desktop. She sleeps quietly in the corner, wak
 
 ## Download and open it
 
-1. Go to the repository's **Releases** page and download **VrindasCat.zip** from the "latest" release (or, from any run on the **Actions** tab, download the **VrindasCat** artifact, which is a zip containing VrindasCat.zip).
+1. Go to the repository's **Releases** page and download **DesktopCat.zip** from the "latest" release (or, from any run on the **Actions** tab, download the **DesktopCat** artifact, which is a zip containing DesktopCat.zip).
 2. Double-click the zip to unpack it and drag **Narasimha.app** into **Applications**.
 3. The first time only, macOS will block it because it isn't from the App Store or a paid developer account:
    - **macOS 14 (Sonoma) or older:** right-click (or Control-click) Narasimha.app, choose **Open**, then click **Open** in the dialog.
@@ -49,7 +49,7 @@ A little yellow sticky note sits beside the cat and follows her when she walks (
 - The **–** button tucks the note away; *To-Do Note* in the paw menu brings it back.
 - **Check-ins:** at 11:00, 15:00 and 19:00 (her Mac's time) she asks about the oldest unfinished task by name, e.g. "Psst. Did "Call Mom" happen yet?", and the last one of the day is a "last call". With an empty list she asks what's on for today instead, and she stays quiet when everything is done. A check-in missed by more than two hours (the Mac was asleep) is skipped. Quiet Mode keeps her quiet, but the note still pops back up.
 - **New day:** finished tasks are cleared and unfinished ones carry over.
-- The list is saved in `~/Library/Application Support/Vrinda's Cat/todos.json`, so it survives restarts and updates.
+- The list is saved in `~/Library/Application Support/Desktop Cat/todos.json`, so it survives restarts and updates.
 
 ### Nudging her from the sheet
 
@@ -89,7 +89,7 @@ The app is a Swift package with no dependencies. GitHub Actions builds it on a m
 On a Mac with Xcode installed:
 
 ```sh
-./scripts/build_app.sh      # makes "build/Narasimha.app" and build/VrindasCat.zip
+./scripts/build_app.sh      # makes "build/Narasimha.app" and build/DesktopCat.zip
 swift run                   # or run straight from the source tree
 ```
 
