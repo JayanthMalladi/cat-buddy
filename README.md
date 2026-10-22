@@ -1,114 +1,177 @@
-# Narasimha
+# Desktop Cat
 
-A tiny cat that lives on your Mac desktop. She sleeps quietly in the corner, wakes up and does something cute when you rest the pointer on her, and every so often says something kind in a speech bubble. No accounts and no AI at runtime. The only things she fetches from the internet are her messages and app updates.
+A small pixel cat that lives on a Mac desktop and keeps someone company from far away.
 
-## Download and open it
+She sleeps in a corner of the screen and wakes up when you rest the pointer on her. Now and then she walks across the screen or says something kind in a speech bubble. She also keeps a to-do sticky note and checks in on it during the day. The person who set her up can edit her messages and send live nudges from a Google Sheet, and she updates herself from this repo's releases.
 
-1. Go to the repository's **Releases** page and download **DesktopCat.zip** from the "latest" release (or, from any run on the **Actions** tab, download the **DesktopCat** artifact, which is a zip containing DesktopCat.zip).
-2. Double-click the zip to unpack it and drag **Narasimha.app** into **Applications**.
-3. The first time only, macOS will block it because it isn't from the App Store or a paid developer account:
-   - **macOS 14 (Sonoma) or older:** right-click (or Control-click) Narasimha.app, choose **Open**, then click **Open** in the dialog.
-   - **macOS 15 (Sequoia) or newer:** double-click it, click **Done** on the warning, then open **System Settings → Privacy & Security**, scroll down to the message about Narasimha, click **Open Anyway**, and confirm with your password.
-   - Alternative for either: open Terminal and run `xattr -dr com.apple.quarantine "/Applications/Narasimha.app"`, then open it normally.
+There is no account, no server, no tracking and no AI running inside the app. It only fetches her messages, the sheet's Control tab and app updates.
 
-After that it opens like any other app. It has no Dock icon; look for the paw print in the menu bar.
+> The app currently ships as **Narasimha.app** (its display name); the project, download and data folder are called Desktop Cat.
 
-You only do this once: from then on the app **updates itself** (see below).
+## Why it exists
 
-## Using it
+Desktop Cat started as a gift for someone in a long-distance relationship. The goal is a small, warm presence on their screen that the sender can keep tending day to day without shipping a new build. That shaped the design:
 
-- She sleeps curled up by default.
-- **Rest the pointer on her** while she sleeps: she wakes up for one random action (stretch, yawn, head tilt, happy wiggle, sitting up, or a short rest) and goes back to sleep when it's done. Leaving the pointer on her won't start another one; move it away from her and back for that.
-- She also says a message when you hover or click, but at most once every 2 minutes. Inside that window she still does her action, just quietly.
-- **Drag the cat** to move her anywhere. She remembers where you put her.
-- Clicks on the empty space around her go straight through to whatever is behind.
-- **Every 5 minutes** she wakes up by herself and walks to the other side of the screen, then curls up to sleep there. Walks are silent, and hovering or clicking does nothing until she's asleep again. If she's in the middle of something when it's time, she finishes it first.
-- Every so often (every 15 minutes by default) she rests and says a random message on her own.
-- **Reminders** come on their own schedule: drink water every hour, stretch every 90 minutes (she stretches with you), and a snack check every 4 hours.
-- **Menu bar paw:**
-  - *To-Do Note* shows or tucks away her to-do note.
-  - *Say Something* shows a message right away.
-  - *Quiet Mode* stops everything she says on her own (hover, timed messages and reminders). Clicking her still gets you one.
-  - *Water & Stretch Reminders* turns the reminders on or off.
-  - *Messages* sets how often she talks: every 5, 15 or 30 minutes, or every hour.
-  - *Size* makes her Small, Medium, Large or Extra Large (remembered between launches).
-  - *Bring Cat Back* moves her to the bottom-right corner if she ever gets lost off screen.
-  - *Set Messages Link…* points her at your messages sheet (see below).
-  - *Check for Updates* looks for a new build right away; the line under it shows which build is running.
-  - *Quit Narasimha*.
+- **It has to be cute and quiet.** It is one hand-animated cat with eight poses. She stays out of the way, mouse clicks pass through everything except the cat herself, and Quiet Mode silences everything she would say unprompted.
+- **The sender needs a remote control, not a backend.** The cat's messages, nudges and check-in times come from an ordinary Google Sheet that only the sender edits.
+- **Installing and updating must happen once, by someone who isn't technical.** She updates herself from GitHub releases, with no App Store and no developer account.
+- **The repo is public, so nothing personal lives in it.** The sheet link is pasted on the recipient's Mac and stays only in that Mac's settings.
 
-To start it automatically, add it in **System Settings → General → Login Items**.
+## What she does
 
-## Her to-do note
+| | |
+|---|---|
+| **Sleeps and reacts** | She curls up asleep by default. Resting the pointer on her wakes her for one random action (stretch, yawn, head tilt, happy wiggle, sit up, short rest), and she goes back to sleep afterwards. The pointer has to leave and come back before she does another one. |
+| **Walks** | Every 5 minutes she gets up, walks silently to the far side of the screen and curls up there. |
+| **Talks** | She says a random message every 5, 15, 30 or 60 minutes (chosen in the menu). Hovering or clicking also gets a message, at most once every 2 minutes. |
+| **Reminds** | Water every hour, a stretch every 90 minutes (she stretches too), a snack every 4 hours. |
+| **To-do note** | A yellow pixel sticky note sits beside her and follows her around. Add tasks any time, click one to tick it off (she celebrates and a paw print fills in), or right-click to delete. Unfinished tasks carry over to the next day. |
+| **Check-ins** | At 11:00, 15:00 and 19:00 she asks about the oldest unfinished task by name; the last one of the day is a "last call". |
+| **Nudges** | A line typed into the sheet's Control tab shows up within a minute in a pinned pink bubble. She dances until it's clicked. |
+| **Updates herself** | She checks the "latest" release 30 seconds after launch and then every hour. If there is a newer build, she swaps herself for it and reopens. |
 
-A little yellow sticky note sits beside the cat and follows her when she walks (it hops to her other side when she gets near the edge of the screen).
+## Install
 
-- **Add a task any time of day:** click the "+ Add a task" box, type, and press Return. Escape stops typing. Up to 10 tasks.
-- **Click a task** to tick it off. The cat does a happy wiggle and says how many are left; each finished task fills in a paw print.
-- **Right-click a task** to delete it.
-- The **–** button tucks the note away; *To-Do Note* in the paw menu brings it back.
-- **Check-ins:** at 11:00, 15:00 and 19:00 (her Mac's time) she asks about the oldest unfinished task by name, e.g. "Psst. Did "Call Mom" happen yet?", and the last one of the day is a "last call". With an empty list she asks what's on for today instead, and she stays quiet when everything is done. A check-in missed by more than two hours (the Mac was asleep) is skipped. Quiet Mode keeps her quiet, but the note still pops back up.
-- **New day:** finished tasks are cleared and unfinished ones carry over.
-- The list is saved in `~/Library/Application Support/Desktop Cat/todos.json`, so it survives restarts and updates.
+1. Download **DesktopCat.zip** from the "latest" release on the **Releases** page. Unzip it and drag **Narasimha.app** into **Applications**.
+2. The first time only, macOS blocks it because it isn't from the App Store or a paid developer account:
+   - **macOS 14 or older:** right-click the app, choose **Open**, then click **Open** again.
+   - **macOS 15 or newer:** open it, click **Done** on the warning, then go to **System Settings → Privacy & Security**, click **Open Anyway** next to the message about the app, and confirm with your password.
+   - **Either version:** run `xattr -dr com.apple.quarantine "/Applications/Narasimha.app"` in Terminal.
+3. To have her start with the Mac, add the app under **System Settings → General → Login Items**.
 
-### Nudging her from the sheet
+The app has no Dock icon. Look for the paw print in the menu bar. After this first install, every update arrives on its own.
 
-The messages sheet can have a tab named **Control** with a name in column A and a value in column B:
+### The paw menu
+
+| Item | What it does |
+|---|---|
+| To-Do Note | Shows or tucks away the sticky note |
+| Say Something | A message right now |
+| Quiet Mode | Stops everything she says on her own; clicking her still gets one |
+| Water & Stretch Reminders | Turns the reminders on or off |
+| Messages | How often she talks on her own |
+| Size | Small, Medium, Large or Extra Large |
+| Bring Cat Back | Moves her to the bottom-right corner if she gets lost |
+| Set Messages Link… | Pastes in the Google Sheet link (see below) |
+| Check for Updates | Looks for a new build now; the line under it shows the running build |
+
+## The Google Sheet (remote control)
+
+The sheet is the only thing the sender has to maintain.
+
+1. Make a Google Sheet. In the first tab, put one message per row in column A (a header row saying "Message" is fine).
+2. Click **Share → General access → Anyone with the link → Viewer**, and copy the link.
+3. On the cat's Mac, choose **Set Messages Link…** and paste it. The link is saved only in that Mac's settings, never in the app or this repo, and it survives updates.
+
+Add a second tab named **Control** with a name in column A and a value in column B:
 
 | A | B |
 |---|---|
 | Nudge | Go finish that lab report, I believe in you! |
 | Check-in times | 11:00, 15:00, 19:00 |
 
-- **Nudge:** a message from Jayanth, for when he wants her to notice something right now. Type a new line and within a minute (she re-reads the sheet every minute) the cat does her happy dance and shows it in a pink bubble signed "from Jayanth 💌", even in Quiet Mode. The bubble stays up until she clicks it or the cat, and the cat dances again every minute until then. Meanwhile she doesn't walk off, and her own messages and reminders wait; a check-in that comes due still brings the note up, and its question follows once the nudge is clicked. Nudges don't open the to-do note. She says each nudge once; to send the same words again, change them slightly.
-- **Check-in times:** comma-separated times in her time zone, like `10am, 2pm, 8pm` or `9:30, 13:00, 21:00`. Clear the cell to go back to 11:00, 15:00 and 19:00.
+- **Nudge:** each new line is shown once, in a pinned bubble, even in Quiet Mode. To send the same words again, change them slightly.
+- **Check-in times:** comma-separated times in her time zone, such as `10am, 2pm, 8pm` or `9:30, 13:00, 21:00`. Clear the cell to go back to the defaults.
 
-It uses the same share link as the messages, so there is nothing more to set up on her Mac.
+She re-reads the sheet every minute. A broken, empty or unshared sheet is ignored, and she keeps what she had. The last good copy is cached for when the Mac is offline. Without a sheet she uses the generic lines in `Resources/messages.json`.
 
-## Updates and new messages
+## How it works
 
-- **Messages:** the app downloads its messages when it starts and then every minute, so new ones reach her within a minute without a new build. A broken or empty list is ignored and she keeps the messages she has; the last good copy is kept for when the Mac is offline. Where they come from:
-  - **A Google Sheet (recommended):** put one message per row in column A (a header row saying "Message" is fine). Click **Share → General access → Anyone with the link → Viewer** and copy the link. On her Mac, choose **Set Messages Link…** from the paw menu and paste it. The link is saved only in that Mac's settings, never in the app or this repo, so the public download doesn't reveal it, and it survives updates. A Drive text file (one message per line) works the same way.
-  - **Otherwise:** `Resources/messages.json` on the `main` branch: a few generic cat lines, since anyone can read this repo. Keep personal messages in the sheet.
-- **The app itself:** every merge to `main` builds a new release. About 30 seconds after launch, and then every hour, the app checks the "latest" release; if it was built from a different commit, it downloads it, swaps itself for the new version and reopens (she disappears for a second or two). This only works when the app is in Applications. The first update after installing may make macOS ask whether Narasimha can update apps; allow it.
+```
+Google Sheet ──(CSV, every minute)──▶ RemoteMessages, RemoteControl ─┐
+                                                                     ▼
+paw menu, hover, clicks, timers ────────────────────────▶ CatController
+                                                          │    │    │
+                                       CatPanel + sprites ┘    │    └ SpeechBubble
+                                                   TodoList + TodoNote
 
-## Changing messages and timing
-
-All three files are plain JSON inside the app (right-click Narasimha.app → *Show Package Contents* → `Contents/Resources`), and in this repo under `Resources/`.
-
-- `messages.json`: lists of messages grouped by category. Add or remove lines freely. The cat never repeats the last few, and talks on the interval chosen in the menu.
-- `reminders.json`: each reminder's text, how often it comes (`everyMinutes`), and optionally an `animation` to play with it.
-- `animations.json`: one entry per state with `fps`, `loop`, the frame range (`start`, `end`), `offsetY` (points, to nudge a pose up or down).
-
-Editing files inside the app breaks its signature; after editing, run `codesign --force --deep --sign - "/Applications/Narasimha.app"` in Terminal (or rebuild).
-
-## Building
-
-The app is a Swift package with no dependencies. GitHub Actions builds it on a macOS runner for every pull request and push to `main` (see `.github/workflows/build.yml`), and each push to `main` refreshes the "latest" release.
-
-On a Mac with Xcode installed:
-
-```sh
-./scripts/build_app.sh      # makes "build/Narasimha.app" and build/DesktopCat.zip
-swift run                   # or run straight from the source tree
+GitHub release "latest" (version.txt + DesktopCat.zip) ──(hourly)──▶ Updater
 ```
 
-## Art
+- **The window.** The cat is a borderless, transparent, always-on-top panel that never takes focus. Several times a second the app checks the pixel under the pointer against the current animation frame, so only the cat herself catches the mouse.
+- **Animation.** There are eight states (`curledSleeping`, `stretching`, `yawning`, `curious`, `happy`, `awake`, `resting`, `walking`). `animations.json` maps each one to a folder of PNG frames, a frame rate, whether it loops, and a vertical offset. A one-shot animation returns to sleep when it ends.
+- **The state machine** (`CatController`) decides what plays next from hover, clicks, timers, walks, reminders, check-ins and nudges. A sequence always plays to the end, and nothing starts during a walk.
+- **The to-do note** is a separate non-activating panel attached to the cat window, so it moves with her and can take typing without bringing the app to the front. Tasks are saved as JSON in `~/Library/Application Support/Desktop Cat/`.
+- **Remote control.** A pasted sheet link is turned into CSV export URLs: the first tab supplies messages, and a `gviz` query for the Control tab supplies nudges and check-in times. Nothing is ever written back.
+- **Self-update.** CI stamps the commit into `Info.plist` and publishes `version.txt` next to the zip. When the two differ, the app downloads the zip and unpacks it with `ditto`. It checks the bundle id and the code signature, clears the quarantine flag, and swaps the app bundle in place. A small shell loop then reopens it once the old process has quit. It uses plain release download links rather than the GitHub API, so it never hits API rate limits.
 
-The frames in `Resources/Animations` come from the repaired 640×640 sprites. `tools/prepare_sprites.py` regenerates them: it keeps every second frame (12 fps), skips known glitches (the head pop in resting, the body jump at the end of happy, the clipped tail at the end of stretching), shifts every animation onto the same ground line, crops and scales to 427×367 px (shown at half size on Retina screens), and saves small palette PNGs.
+## Building and testing
+
+The app is a Swift package (AppKit, macOS 12+) with no dependencies.
 
 ```sh
-python3 tools/prepare_sprites.py /path/to/sprites_repaired
+./scripts/build_app.sh    # universal, ad-hoc signed build/Narasimha.app and build/DesktopCat.zip
+swift run                 # run straight from the source tree
 ```
 
-## How it fits together
+A Mac isn't needed to work on it. GitHub Actions (`.github/workflows/build.yml`) runs on a macOS runner for every pull request and push:
 
-| File | What it does |
+1. Builds the app.
+2. Launches the real binary and drives it with `tools/ui_check.swift`, which uses synthetic mouse events to hover, drag, try dragging from a transparent corner and wait for a walk. It asserts the results and saves screenshots.
+3. Loads a sample to-do list, a nudge and a check-in from a local file, and checks that all three ran.
+4. Pretends a copy is an old build, serves the new build as a local "release", and checks that the copy replaces itself and reopens.
+5. On `main`, publishes the "latest" release.
+
+Screenshots from every run are uploaded as the **screenshots** artifact.
+
+Hidden settings exist for testing. Set them with `defaults write com.campuscat.buddy <key> <value>`.
+
+| Key | Effect |
 |---|---|
-| `App.swift`, `AppDelegate.swift` | Startup and the menu bar item |
-| `CatController.swift` | The state machine: which animation plays, hover, walking, messages, reminders |
-| `CatWindow.swift` | The transparent always-on-top window, dragging, and pixel-accurate click-through |
+| `walkEverySeconds` | Time between walks (default 300) |
+| `autoUpdate` | `false` stops self-updates |
+| `updateFeed` | Folder or URL to read `version.txt` and the zip from |
+| `controlFeed` | URL of a CSV to use instead of the sheet's Control tab |
+| `todoNoteOpen` | Whether the note is showing |
+| `checkInTimes` | Check-in times, in the same format as the sheet |
+
+## Project layout
+
+| Path | What it is |
+|---|---|
+| `Sources/CampusCat/App.swift`, `AppDelegate.swift` | Startup and the paw menu |
+| `CatController.swift` | The state machine: animations, hover, walking, messages, reminders, check-ins, nudges |
+| `CatWindow.swift` | The transparent window, dragging and pixel-accurate click-through |
 | `Animation.swift` | Reads `animations.json`, loads frames, plays them |
-| `SpeechBubble.swift`, `Messages.swift` | The bubble and the message picker |
-| `Todos.swift`, `TodoNote.swift` | The to-do list, its check-in times, and the sticky note window |
-| `RemoteControl.swift` | Reads nudges and check-in times from the sheet's Control tab |
+| `SpeechBubble.swift`, `Messages.swift` | The bubble (normal and pinned) and the message picker |
+| `Todos.swift`, `TodoNote.swift` | The to-do list, check-in times and the sticky note |
+| `RemoteMessages.swift`, `RemoteControl.swift` | Reading the sheet |
+| `Updater.swift` | Self-update from GitHub releases |
+| `Resources/` | Frames, `animations.json`, `messages.json`, `reminders.json` |
+| `scripts/build_app.sh`, `scripts/Info.plist` | Packaging and signing |
+| `tools/ui_check.swift` | The CI UI test |
+| `tools/prepare_sprites.py` | Rebuilds the frames from the source sprites |
+
+The executable and bundle id are still `CampusCat` and `com.campuscat.buddy` from the first prototype. They stay as they are because installed copies match updates by bundle id and keep their settings under it.
+
+### Customizing without code
+
+The three JSON files in `Resources/` (also inside the app under `Contents/Resources`) control the built-in content:
+
+- `messages.json` holds built-in lines grouped by category. The cat avoids repeating the last few.
+- `reminders.json` gives each reminder's text, how often it comes (`everyMinutes`) and an optional `animation`.
+- `animations.json` gives each state's `fps`, `loop`, frame range (`start`, `end`) and `offsetY`.
+
+Editing them inside an installed app breaks its signature. Re-sign it with `codesign --force --deep --sign - "/Applications/Narasimha.app"`, or rebuild.
+
+### Art pipeline
+
+The frames come from 640×640 sprite sheets: eight animations, 96 frames each. `tools/prepare_sprites.py` processes them:
+
+- keeps every second frame (12 fps)
+- skips known glitches
+- puts every animation on the same ground line
+- crops and scales to 427×367 px (shown at half size on Retina screens)
+- writes small palette PNGs
+
+```sh
+python3 tools/prepare_sprites.py /path/to/sprites
+```
+
+## Limits today
+
+- **macOS only.** The window and update tricks are AppKit-specific.
+- **Ad-hoc signed.** The Gatekeeper step is needed once per Mac. Notarization would remove it but needs a paid developer account.
+- **One sender, one cat.** The sheet is a single shared remote: there are no per-user identities, and nothing goes back from the cat to the sender.
+- **Plain polling.** Nudges arrive within about a minute, and updates within an hour.
+- **Link-shared sheet.** Anyone who has the link can read it, so it shouldn't hold anything more private than what she'd see anyway.
